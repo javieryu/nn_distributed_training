@@ -29,7 +29,6 @@ COLOR_MAP = (0, 8)
 
 
 class PathPlanner:
-
     def __init__(self, grid, visual=False):
         """
         Constructor of the PathPlanner Class.
@@ -60,11 +59,13 @@ class PathPlanner:
             for j in range(col):
                 row_diff = abs(i - self.goal_node[0])
                 col_diff = abs(j - self.goal_node[1])
-                self.heuristic[i][j] = int(abs(row_diff - col_diff) + min(row_diff, col_diff) * 2)
+                self.heuristic[i][j] = int(
+                    abs(row_diff - col_diff) + min(row_diff, col_diff) * 2
+                )
 
-        print("Heuristic:")
-        for i in range(len(self.heuristic)):
-            print(self.heuristic[i])
+        # print("Heuristic:")
+        # for i in range(len(self.heuristic)):
+        #    print(self.heuristic[i])
 
     def a_star(self, start_cart, goal_cart):
         """
@@ -82,30 +83,36 @@ class PathPlanner:
         # Calculate the Heuristic for the map
         self.calc_heuristic()
 
-        print(init, goal)
+        # print(init, goal)
 
         if self.visual:
             viz_map = deepcopy(self.grid)
             fig = plt.figure(figsize=(12, 12))
             ax = fig.add_subplot(111)
-            ax.set_title('Occupancy Grid')
+            ax.set_title("Occupancy Grid")
             plt.xticks(visible=False)
             plt.yticks(visible=False)
-            plt.imshow(viz_map, origin='upper', interpolation='none', clim=COLOR_MAP)
-            ax.set_aspect('equal')
+            plt.imshow(
+                viz_map, origin="upper", interpolation="none", clim=COLOR_MAP
+            )
+            ax.set_aspect("equal")
             plt.pause(2)
             viz_map[init[0]][init[1]] = 5  # Place Start Node
             viz_map[goal[0]][goal[1]] = 6
-            plt.imshow(viz_map, origin='upper', interpolation='none', clim=COLOR_MAP)
+            plt.imshow(
+                viz_map, origin="upper", interpolation="none", clim=COLOR_MAP
+            )
             plt.pause(2)
 
         # Different move/search direction options:
 
-        delta = [[-1, 0],  # go up
-                 [0, -1],  # go left
-                 [1, 0],  # go down
-                 [0, 1]]  # go right
-        delta_name = ['^ ', '< ', 'v ', '> ']
+        delta = [
+            [-1, 0],  # go up
+            [0, -1],  # go left
+            [1, 0],  # go down
+            [0, 1],
+        ]  # go right
+        delta_name = ["^ ", "< ", "v ", "> "]
 
         # If you wish to use diagonals:
         # delta = [[-1, 0],  # go up
@@ -120,12 +127,24 @@ class PathPlanner:
 
         # Heavily used from some of the A* Examples by Sebastian Thrun:
 
-        closed = [[0 for col in range(len(self.grid[0]))] for row in range(len(self.grid))]
-        shortest_path = [['  ' for _ in range(len(self.grid[0]))] for _ in range(len(self.grid))]
+        closed = [
+            [0 for col in range(len(self.grid[0]))]
+            for row in range(len(self.grid))
+        ]
+        shortest_path = [
+            ["  " for _ in range(len(self.grid[0]))]
+            for _ in range(len(self.grid))
+        ]
         closed[init[0]][init[1]] = 1
 
-        expand = [[-1 for col in range(len(self.grid[0]))] for row in range(len(self.grid))]
-        delta_tracker = [[-1 for _ in range(len(self.grid[0]))] for _ in range(len(self.grid))]
+        expand = [
+            [-1 for col in range(len(self.grid[0]))]
+            for row in range(len(self.grid))
+        ]
+        delta_tracker = [
+            [-1 for _ in range(len(self.grid[0]))]
+            for _ in range(len(self.grid))
+        ]
 
         cost = 1
         x = init[0]
@@ -141,8 +160,21 @@ class PathPlanner:
             if len(Open) == 0:
                 resign = True
                 if self.visual:
-                    plt.text(2, 10, s="No path found...", fontsize=18, style='oblique', ha='center', va='top')
-                    plt.imshow(viz_map, origin='upper', interpolation='none', clim=COLOR_MAP)
+                    plt.text(
+                        2,
+                        10,
+                        s="No path found...",
+                        fontsize=18,
+                        style="oblique",
+                        ha="center",
+                        va="top",
+                    )
+                    plt.imshow(
+                        viz_map,
+                        origin="upper",
+                        interpolation="none",
+                        clim=COLOR_MAP,
+                    )
                     plt.pause(5)
                 return -1
             else:
@@ -159,8 +191,21 @@ class PathPlanner:
                     found = True
                     if self.visual:
                         viz_map[goal[0]][goal[1]] = 7
-                        plt.text(2, 10, s="Goal found!", fontsize=18, style='oblique', ha='center', va='top')
-                        plt.imshow(viz_map, origin='upper', interpolation='none', clim=COLOR_MAP)
+                        plt.text(
+                            2,
+                            10,
+                            s="Goal found!",
+                            fontsize=18,
+                            style="oblique",
+                            ha="center",
+                            va="top",
+                        )
+                        plt.imshow(
+                            viz_map,
+                            origin="upper",
+                            interpolation="none",
+                            clim=COLOR_MAP,
+                        )
                         plt.pause(2)
                 else:
                     for i in range(len(delta)):
@@ -175,35 +220,53 @@ class PathPlanner:
                                 delta_tracker[x2][y2] = i
                                 if self.visual:
                                     viz_map[x2][y2] = 3
-                                    plt.imshow(viz_map, origin='upper', interpolation='none', clim=COLOR_MAP)
-                                    plt.pause(.5)
+                                    plt.imshow(
+                                        viz_map,
+                                        origin="upper",
+                                        interpolation="none",
+                                        clim=COLOR_MAP,
+                                    )
+                                    plt.pause(0.5)
 
         current_x = goal[0]
         current_y = goal[1]
-        shortest_path[current_x][current_y] = '* '
+        shortest_path[current_x][current_y] = "* "
         full_path = []
         while current_x != init[0] or current_y != init[1]:
-            previous_x = current_x - delta[delta_tracker[current_x][current_y]][0]
-            previous_y = current_y - delta[delta_tracker[current_x][current_y]][1]
-            shortest_path[previous_x][previous_y] = delta_name[delta_tracker[current_x][current_y]]
+            previous_x = (
+                current_x - delta[delta_tracker[current_x][current_y]][0]
+            )
+            previous_y = (
+                current_y - delta[delta_tracker[current_x][current_y]][1]
+            )
+            shortest_path[previous_x][previous_y] = delta_name[
+                delta_tracker[current_x][current_y]
+            ]
             full_path.append((current_x, current_y))
             current_x = previous_x
             current_y = previous_y
         full_path.reverse()
-        print("Found the goal in {} iterations.".format(count))
-        print("full_path: ", full_path[:-1])
-        for i in range(len(shortest_path)):
-            print(shortest_path[i])
+        # print("Found the goal in {} iterations.".format(count))
+        # print("full_path: ", full_path[:-1])
+        # for i in range(len(shortest_path)):
+        #     print(shortest_path[i])
 
         if self.visual:
             for node in full_path:
                 viz_map[node[0]][node[1]] = 7
-                plt.imshow(viz_map, origin='upper', interpolation='none', clim=COLOR_MAP)
-                plt.pause(.5)
+                plt.imshow(
+                    viz_map,
+                    origin="upper",
+                    interpolation="none",
+                    clim=COLOR_MAP,
+                )
+                plt.pause(0.5)
 
             # Animate reaching goal:
             viz_map[goal[0]][goal[1]] = 8
-            plt.imshow(viz_map, origin='upper', interpolation='none', clim=COLOR_MAP)
+            plt.imshow(
+                viz_map, origin="upper", interpolation="none", clim=COLOR_MAP
+            )
             plt.pause(5)
 
         return init, full_path[:-1]

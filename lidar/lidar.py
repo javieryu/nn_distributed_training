@@ -1,5 +1,7 @@
 import scipy.interpolate as interp
 import numpy as np
+import torch
+import PIL
 
 
 class Lidar2D:
@@ -8,12 +10,16 @@ class Lidar2D:
     """
 
     def __init__(self, img, num_beams, scan_dist_scale, beam_samps):
-        """
-        Args:
-            img (np.array): Array with size (nx, ny),
-            and values in the range [0.0, 1.0]
+        """Setting up the lidar scanner
 
-            num_beams (int): Number of beams in a single lidar scan.
+        Args:
+            img (np.array): Array of densities (between 0 and 1)
+             in image coordinates
+            num_beams (int): set the number of beams in a single scan.
+            scan_dist_scale (float): length of a single beam as a
+             percentage of the length of the largest dimension of the image.
+            beam_samps (int): Number of samples along each beam. Tuning this parameter
+             will effect whether thin walls are detected.
         """
         self.beam_stop_thresh = 0.5
 
@@ -31,6 +37,21 @@ class Lidar2D:
         self.density = interp.RectBivariateSpline(self.xs, self.ys, self.img.T)
 
     def scan(self, pos):
+        """Scans from a given coordinate
+
+        Args:
+            pos (np.array): an array with dims (1, 2) indicating the (x, y)
+             position of the scan.
+
+        Raises:
+            NameError: Errors if a scan is called from inside a wall or outside
+            of the image domain.
+
+        Returns:
+            (np.array): an array with dims (z, 3) where z is the number of scanned
+             points that may vary between scans because of beams ending early when
+             they hit walls.
+        """
         if self.density.ev(pos[0, 0], pos[0, 1]) >= self.beam_stop_thresh:
             raise NameError("Cannot lidar scan from point with high density.")
         angs = np.linspace(-np.pi, np.pi, num=self.num_beams, endpoint=False)
@@ -58,3 +79,51 @@ class Lidar2D:
             )
 
         return np.vstack(beam_data)
+
+
+class BatchLidarDataset(torch.utils.data.Dataset):
+    def __init__(
+        self,
+        img_dir,
+        num_beams,
+        scan_dist_scale,
+        beam_samps,
+        num_scans,
+    ):
+        self.img = np.asarray(PIL.Image.open(img_dir)).astype(float) / 255.0
+        self.lidar = Lidar2D(self.img, num_beams, scan_dist_scale, beam_samps)
+
+        # Generate Scan Coordinates
+        c = 0
+        locs = []
+        while c < num_scans:
+            xsamps = np.random.choice(self.lidar.xs, num_scans)
+            ysamps = np.random.choice(self.lidar.ys, num_scans)
+            psamps = self.lidar.density.ev(xsamps, ysamps)
+            mask = psamps < 0.5
+            c += np.sum(mask)
+
+            locs.append(
+                np.hstack(
+                    [xsamps[mask].reshape(-1, 1), ysamps[mask].reshape(-1, 1)]
+                )
+            )
+
+        self.scan_locs = np.vstack(locs)[:num_scans, :]
+
+        scan_list = []
+        for k in range(num_scans):
+            pos = self.scan_locs[k, :].reshape(1, 2)
+            scan_list.append(self.lidar.scan(pos))
+
+        self.scans = torch.from_numpy(np.vstack(scan_list))
+
+    def __getitem__(self, idx):
+        meta_dict = {
+            "density": self.scans[idx, 2].reshape(1, -1),
+            "position": self.scans[idx, :2].reshape(1, -1),
+        }
+        return meta_dict
+
+    def __len__(self):
+        return self.scans.shape[0]
