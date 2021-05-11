@@ -103,9 +103,9 @@ for i in range(N):
     train_iters[i] = iter(train_loaders[i])
 
 # Setup Loss and CADMM
-primal_steps = 10
-cadmm_iterations = 75
-eval_every = 5
+primal_steps = 5
+cadmm_iterations = 1600
+eval_every = 40
 rho = 1.0
 lr = 0.005
 
