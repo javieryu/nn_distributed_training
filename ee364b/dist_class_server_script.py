@@ -78,9 +78,7 @@ def main():
     val_loader = torch.utils.data.DataLoader(val_set, batch_size=1000)
 
     N = 10
-    G = nx.erdos_renyi_graph(N, 0.6)
-    nx.is_connected(G)
-    nx.draw_networkx(G)
+    G = nx.wheel_graph(N)
 
     base_model = Net()
     models = {i: copy.deepcopy(base_model) for i in range(N)}
