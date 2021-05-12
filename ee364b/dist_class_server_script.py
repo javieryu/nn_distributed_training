@@ -1,11 +1,10 @@
-import torch
+import copy
 import numpy as np
 from torchvision import datasets, transforms
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import networkx as nx
-import copy
-import itertools
 
 
 class Net(nn.Module):
@@ -32,7 +31,7 @@ def primal_update(
     data_loader, data_iter, model, base_loss, dual, thj, rho, lr, max_its
 ):
     opt = torch.optim.Adam(model.parameters(), lr=lr)
-    for k in range(max_its):
+    for _ in range(max_its):
         # Load the batch
         try:
             x, y = next(data_iter)
@@ -68,109 +67,126 @@ def validate(base_loss, val_loader, model):
         return avg_loss, acc
 
 
-transform = transforms.Compose(
-    [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
-)
-train_set = datasets.MNIST(
-    "../data", train=True, download=True, transform=transform
-)
-train_loader = torch.utils.data.DataLoader(train_set, batch_size=64)
-val_set = datasets.MNIST("../data", train=False, transform=transform)
-val_loader = torch.utils.data.DataLoader(val_set, batch_size=1000)
-
-N = 10
-G = nx.erdos_renyi_graph(N, 0.6)
-nx.is_connected(G)
-nx.draw_networkx(G)
-
-base_model = Net()
-models = {i: copy.deepcopy(base_model) for i in range(N)}
-
-# Setup Data
-labels = train_set.targets
-train_idxs = np.arange(len(labels))
-batch_size = 64
-
-train_loaders = {}
-train_iters = {}
-
-for i in range(N):
-    idx_to_keep = labels == i
-    node_subset = torch.utils.data.Subset(train_set, train_idxs[idx_to_keep])
-    train_loaders[i] = torch.utils.data.DataLoader(
-        node_subset, batch_size=batch_size, shuffle=True
+def main():
+    transform = transforms.Compose(
+        [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
     )
-    train_iters[i] = iter(train_loaders[i])
+    train_set = datasets.MNIST(
+        "../data", train=True, download=True, transform=transform
+    )
+    val_set = datasets.MNIST("../data", train=False, transform=transform)
+    val_loader = torch.utils.data.DataLoader(val_set, batch_size=1000)
 
-# Setup Loss and CADMM
-primal_steps = 5
-cadmm_iterations = 1600
-eval_every = 40
-rho = 1.0
-lr = 0.005
+    N = 10
+    G = nx.erdos_renyi_graph(N, 0.6)
+    nx.is_connected(G)
+    nx.draw_networkx(G)
 
-num_params = torch.nn.utils.parameters_to_vector(models[0].parameters()).shape[
-    0
-]
+    base_model = Net()
+    models = {i: copy.deepcopy(base_model) for i in range(N)}
 
-duals = {i: torch.zeros(num_params) for i in range(N)}
-obvs = torch.zeros((cadmm_iterations // eval_every + 1, N))
-accs = torch.zeros((cadmm_iterations // eval_every + 1, N))
+    # Setup Data
+    data_split_type = "uniform"
+    labels = train_set.targets
+    train_idxs = np.arange(len(labels))
+    batch_size = 64
 
-cnt_evals = 0
-for k in range(cadmm_iterations):
-    ths = {
-        i: (
-            torch.nn.utils.parameters_to_vector(models[i].parameters())
-            .clone()
-            .detach()
-        )
-        for i in range(N)
-    }
+    train_loaders = {}
+    train_iters = {}
 
-    for i in range(N):
-        # Communication
-        neighs = list(G.neighbors(i))
-        thj = torch.stack([ths[j] for j in neighs])
-
-        # Update the dual var
-        duals[i] += rho * torch.sum(ths[i] - thj, dim=0)
-
-        # Primal Update
-        # (data_loader, data_iter, model, base_loss, dual, thj, rho, lr, max_its)
-        primal_update(
-            train_loaders[i],
-            train_iters[i],
-            models[i],
-            torch.nn.NLLLoss(),
-            duals[i],
-            thj,
-            rho,
-            lr,
-            primal_steps,
-        )
-
-        # Evaluate model on all classes
-        if k % eval_every == 0 or k == cadmm_iterations - 1:
-            obvs[cnt_evals, i], accs[cnt_evals, i] = validate(
-                torch.nn.NLLLoss(), val_loader, models[i]
+    if data_split_type == "hetero":
+        for i in range(N):
+            idx_to_keep = labels == i
+            node_subset = torch.utils.data.Subset(
+                train_set, train_idxs[idx_to_keep]
             )
-            obv_str = "{:.4f}".format(obvs[cnt_evals, i].item())
-            acc_str = "{:.4f}".format(accs[cnt_evals, i].item())
-            print(
-                "Iteration: ",
-                k,
-                " | NLLLoss: ",
-                obv_str,
-                " | Acc: ",
-                acc_str,
-                " | Node: ",
-                i,
+            train_loaders[i] = torch.utils.data.DataLoader(
+                node_subset, batch_size=batch_size, shuffle=True
+            )
+            train_iters[i] = iter(train_loaders[i])
+    else:
+        num_per = len(labels) / N
+        splits = [int(num_per) for _ in range(N)]
+        uniform_sets = torch.utils.data.random_split(train_set, splits)
+        for i in range(N):
+            train_loaders[i] = torch.utils.data.DataLoader(
+                uniform_sets[i], batch_size=batch_size, shuffle=True
+            )
+            train_iters[i] = iter(train_loaders[i])
+
+    # Setup Loss and CADMM
+    primal_steps = 5
+    cadmm_iterations = 1600
+    eval_every = 40
+    rho = 1.0
+    lr = 0.005
+
+    num_params = torch.nn.utils.parameters_to_vector(
+        models[0].parameters()
+    ).shape[0]
+
+    duals = {i: torch.zeros(num_params) for i in range(N)}
+    obvs = torch.zeros((cadmm_iterations // eval_every + 1, N))
+    accs = torch.zeros((cadmm_iterations // eval_every + 1, N))
+
+    cnt_evals = 0
+    for k in range(cadmm_iterations):
+        ths = {
+            i: (
+                torch.nn.utils.parameters_to_vector(models[i].parameters())
+                .clone()
+                .detach()
+            )
+            for i in range(N)
+        }
+
+        for i in range(N):
+            # Communication
+            neighs = list(G.neighbors(i))
+            thj = torch.stack([ths[j] for j in neighs])
+
+            # Update the dual var
+            duals[i] += rho * torch.sum(ths[i] - thj, dim=0)
+
+            # Primal Update
+            # (data_loader, data_iter, model, base_loss, dual, thj, rho, lr, max_its)
+            primal_update(
+                train_loaders[i],
+                train_iters[i],
+                models[i],
+                torch.nn.NLLLoss(),
+                duals[i],
+                thj,
+                rho,
+                lr,
+                primal_steps,
             )
 
-    if k % eval_every == 0:
-        cnt_evals += 1
+            # Evaluate model on all classes
+            if k % eval_every == 0 or k == cadmm_iterations - 1:
+                obvs[cnt_evals, i], accs[cnt_evals, i] = validate(
+                    torch.nn.NLLLoss(), val_loader, models[i]
+                )
+                obv_str = "{:.4f}".format(obvs[cnt_evals, i].item())
+                acc_str = "{:.4f}".format(accs[cnt_evals, i].item())
+                print(
+                    "Iteration: ",
+                    k,
+                    " | NLLLoss: ",
+                    obv_str,
+                    " | Acc: ",
+                    acc_str,
+                    " | Node: ",
+                    i,
+                )
 
-torch.save(
-    {"obj_vals": obvs, "accuracy": accs}, "outputs/dist_class_results.pt"
-)
+        if k % eval_every == 0:
+            cnt_evals += 1
+
+    torch.save(
+        {"obj_vals": obvs, "accuracy": accs}, "outputs/dist_class_results.pt"
+    )
+
+
+if __name__ == "__main__":
+    main()

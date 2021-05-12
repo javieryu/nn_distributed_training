@@ -2,5 +2,7 @@
     "python.formatting.provider": "black",
     "python.linting.pylintEnabled": true,
     "python.linting.enabled": true,
-    "jupyter.jupyterServerType": "local"
+    "jupyter.jupyterServerType": "local",
+    "python.linting.flake8Enabled": false,
+    "python.pythonPath": "venv/bin/python"
 }
