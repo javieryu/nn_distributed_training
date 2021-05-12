@@ -84,7 +84,7 @@ def main():
     models = {i: copy.deepcopy(base_model) for i in range(N)}
 
     # Setup Data
-    data_split_type = "uniform"
+    data_split_type = "hetero"
     labels = train_set.targets
     train_idxs = np.arange(len(labels))
     batch_size = 64
@@ -93,6 +93,7 @@ def main():
     train_iters = {}
 
     if data_split_type == "hetero":
+        print("Data Split Type: Heterogenous")
         for i in range(N):
             idx_to_keep = labels == i
             node_subset = torch.utils.data.Subset(
@@ -103,6 +104,7 @@ def main():
             )
             train_iters[i] = iter(train_loaders[i])
     else:
+        print("Data Split Type: Uniform Random")
         num_per = len(labels) / N
         splits = [int(num_per) for _ in range(N)]
         uniform_sets = torch.utils.data.random_split(train_set, splits)
@@ -114,7 +116,7 @@ def main():
 
     # Setup Loss and CADMM
     primal_steps = 5
-    cadmm_iterations = 1600
+    cadmm_iterations = 600
     eval_every = 40
     rho = 1.0
     lr = 0.005
