@@ -104,5 +104,14 @@ class PathPlanner:
 
 		return False
 
+	def waypoint_following(self, waypoints) :
+		"""
+		Given an array of waypoints, generate path through all of them using A*
+		"""
+		path = waypoints[0,:] # starting coordinate
+		for i in range(np.shape(waypoints)[0]-1) :
+			path = np.vstack((path, self.a_star(waypoints[i,:], waypoints[i+1,:])[1:,:]))
+		return path
+
 
 
