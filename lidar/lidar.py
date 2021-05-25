@@ -2,6 +2,7 @@ import scipy.interpolate as interp
 import numpy as np
 import torch
 import PIL
+from PIL import Image
 
 
 class Lidar2D:
@@ -91,7 +92,8 @@ class RandomPoseLidarDataset(torch.utils.data.Dataset):
         num_scans,
         round_density=True,
     ):
-        self.img = np.asarray(PIL.Image.open(img_dir)).astype(float) / 255.0
+        super().__init__()
+        self.img = np.asarray(Image.open(img_dir)).astype(float) / 255.0
         self.lidar = Lidar2D(self.img, num_beams, scan_dist_scale, beam_samps)
 
         # Generate Scan Coordinates
