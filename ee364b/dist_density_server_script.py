@@ -98,7 +98,7 @@ def main():
     val_loader = torch.utils.data.DataLoader(val_set, batch_size=batch_size)
 
     # Setup Loss and CADMM
-    primal_steps = 5
+    primal_steps = 2
     cadmm_iterations = 1000
     eval_every = 40
     rho = 1.0
