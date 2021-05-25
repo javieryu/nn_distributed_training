@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from queue import PriorityQueue
 from itertools import count
+import random
 
 class PathPlanner:
 	def __init__(self, grid):
@@ -113,5 +114,18 @@ class PathPlanner:
 			path = np.vstack((path, self.a_star(waypoints[i,:], waypoints[i+1,:])[1:,:]))
 		return path
 
+	def random_walk(self, start, length) :
+		path = np.empty((length,2))
+		path[0,:] = start
+		for i in range(length-1) : 
+			while True :
+				a = random.choice(np.array([[0, 1], [0, -1], [1, 0], [-1, 0]]))
+				next_state = np.int_(path[i,:] + a)
+				# print("Next State: ", next_state)
+				if self.grid[tuple(next_state)] == 0 :
+					break
 
+			path[i+1,:] = next_state
+
+		return path
 
