@@ -54,6 +54,7 @@ class Lidar2D:
              they hit walls.
         """
         if self.density.ev(pos[0, 0], pos[0, 1]) >= self.beam_stop_thresh:
+            print(pos)
             raise NameError("Cannot lidar scan from point with high density.")
         angs = np.linspace(-np.pi, np.pi, num=self.num_beams, endpoint=False)
 
@@ -117,6 +118,46 @@ class RandomPoseLidarDataset(torch.utils.data.Dataset):
         scan_list = []
         for k in range(num_scans):
             pos = self.scan_locs[k, :].reshape(1, 2)
+            scan_list.append(self.lidar.scan(pos))
+
+        self.scans = torch.from_numpy(np.vstack(scan_list))
+
+        if round_density:
+            self.scans[:, 2] = np.rint(self.scans[:, 2])
+
+    def __getitem__(self, idx):
+        meta_dict = {
+            "density": self.scans[idx, 2].reshape(1, -1),
+            "position": self.scans[idx, :2].reshape(1, -1),
+        }
+        return meta_dict
+
+    def __len__(self):
+        return self.scans.shape[0]
+
+
+class TrajectoryLidarDataset(torch.utils.data.Dataset):
+    def __init__(
+        self,
+        img_dir,
+        num_beams,
+        scan_dist_scale,
+        beam_samps,
+        trajectory,
+        round_density=True,
+    ):
+        super().__init__()
+        self.img = np.asarray(Image.open(img_dir)).astype(float) / 255.0
+        self.lidar = Lidar2D(self.img, num_beams, scan_dist_scale, beam_samps)
+        self.traj = trajectory
+
+        self.traj = np.flip(self.traj)
+        self.traj[:, 0] -= self.lidar.nx
+
+        num_scans = trajectory.shape[0]
+        scan_list = []
+        for k in range(num_scans):
+            pos = trajectory[k, :].reshape(1, 2)
             scan_list.append(self.lidar.scan(pos))
 
         self.scans = torch.from_numpy(np.vstack(scan_list))
