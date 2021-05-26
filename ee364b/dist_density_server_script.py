@@ -8,18 +8,19 @@ from numpy import save
 sys.path.insert(0, "../models/")
 sys.path.insert(0, "../lidar/")
 from fourier_nn import FourierNet
-from lidar import RandomPoseLidarDataset
+from lidar import RandomPoseLidarDataset, TrajectoryLidarDataset
 
 import torch
 import networkx as nx
+import numpy as np
 
 torch.set_default_tensor_type(torch.DoubleTensor)
 
 
 def primal_update(
-    data_loader, data_iter, model, base_loss, dual, thj, rho, lr, max_its
+    data_loader, data_iter, opt, model, base_loss, dual, thj, rho, lr, max_its
 ):
-    opt = torch.optim.Adam(model.parameters(), lr=lr)
+    # opt = torch.optim.Adam(model.parameters(), lr=lr)
     for k in range(max_its):
         # Load the batch
         try:
@@ -73,6 +74,14 @@ def main():
     scan_dist = 0.2
     num_scans = 3000
     img_dir = "../floorplans/32_b.png"
+    traj_paths = [
+        "../planner/waypoint_path1.npy",
+        "../planner/waypoint_path2.npy",
+        "../planner/waypoint_path3.npy",
+        "../planner/waypoint_path4.npy",
+        "../planner/waypoint_path5.npy",
+        "../planner/waypoint_path6.npy",
+    ]
 
     train_loaders = {}  # Dictionary of dataloaders for each node
     train_iters = {}  # Dictionary of iterators for each node
@@ -87,8 +96,16 @@ def main():
             )
             train_iters[i] = iter(train_loaders[i])
     elif data_type == "trajectory":
+        for i in range(N):
+            traj = np.load(traj_paths[i])
+            node_set = TrajectoryLidarDataset(
+                img_dir, num_beams, scan_dist, beam_samps, traj
+            )
+            train_loaders[i] = torch.utils.data.DataLoader(
+                node_set, batch_size=batch_size, shuffle=True
+            )
+            train_iters[i] = iter(train_loaders[i])
         print("Trajectories not yet supported")
-        # TODO: Write this code
     else:
         print("Not a supported data_type")
 
@@ -111,6 +128,9 @@ def main():
 
     duals = {i: torch.zeros(num_params) for i in range(N)}
     obvs = torch.zeros((cadmm_iterations // eval_every + 1, N))
+    opts = {
+        i: torch.optim.Adam(models[i].parameters(), lr=lr) for i in range(N)
+    }
 
     cnt_evals = 0
     for k in range(cadmm_iterations):
@@ -144,6 +164,7 @@ def main():
             primal_update(
                 train_loaders[i],
                 train_iters[i],
+                opts[i],
                 models[i],
                 base_loss,
                 duals[i],
