@@ -3,3 +3,4 @@ networkx
 pip-chill
 scipy
 torchvision
+torch

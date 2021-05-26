@@ -32,8 +32,8 @@ class Lidar2D:
         self.ny = self.img.shape[0]
         self.beam_len = scan_dist_scale * max(self.nx, self.ny)
 
-        self.ys = self.ny * np.linspace(-0.5, 0.5, num=self.ny)
         self.xs = self.nx * np.linspace(-0.5, 0.5, num=self.nx)
+        self.ys = self.ny * np.linspace(-0.5, 0.5, num=self.ny)
 
         self.density = interp.RectBivariateSpline(self.xs, self.ys, self.img.T)
 
@@ -54,6 +54,7 @@ class Lidar2D:
              they hit walls.
         """
         if self.density.ev(pos[0, 0], pos[0, 1]) >= self.beam_stop_thresh:
+            print(pos)
             raise NameError("Cannot lidar scan from point with high density.")
         angs = np.linspace(-np.pi, np.pi, num=self.num_beams, endpoint=False)
 
@@ -123,6 +124,48 @@ class RandomPoseLidarDataset(torch.utils.data.Dataset):
 
         if round_density:
             self.scans[:, 2] = np.rint(self.scans[:, 2])
+
+    def __getitem__(self, idx):
+        meta_dict = {
+            "density": self.scans[idx, 2].reshape(1, -1),
+            "position": self.scans[idx, :2].reshape(1, -1),
+        }
+        return meta_dict
+
+    def __len__(self):
+        return self.scans.shape[0]
+
+
+class TrajectoryLidarDataset(torch.utils.data.Dataset):
+    def __init__(
+        self,
+        img_dir,
+        num_beams,
+        scan_dist_scale,
+        beam_samps,
+        trajectory,
+        round_density=True,
+    ):
+        super().__init__()
+        self.img = np.asarray(Image.open(img_dir)).astype(float) / 255.0
+        self.lidar = Lidar2D(self.img, num_beams, scan_dist_scale, beam_samps)
+        self.traj = np.flip(trajectory, 1) # get [x, y]    
+        num_scans = trajectory.shape[0]
+        
+        self.scan_locs = np.empty([num_scans, 2])
+        scan_list = []
+        for k in range(num_scans):
+            pos = self.__img2lidar__(self.traj[k, :].reshape(1, 2))
+            self.scan_locs[k,:] = pos
+            scan_list.append(self.lidar.scan(pos))
+
+        self.scans = torch.from_numpy(np.vstack(scan_list))
+
+        if round_density:
+            self.scans[:, 2] = np.rint(self.scans[:, 2])
+    
+    def __img2lidar__(self, img_idx):
+        return np.array([self.lidar.nx, self.lidar.ny]) * ((img_idx / np.array([self.lidar.nx-1, self.lidar.ny-1]) - np.array([0.5, 0.5])))
 
     def __getitem__(self, idx):
         meta_dict = {
