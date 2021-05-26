@@ -1,3 +1,5 @@
+import os
+from datetime import datetime
 import copy
 import numpy as np
 from torchvision import datasets, transforms
@@ -67,6 +69,53 @@ def validate(base_loss, val_loader, model):
         return avg_loss, acc
 
 
+def train_ind(model, train_loader, val_loader):
+    lr = 0.01
+    epochs = 5
+
+    opt = torch.optim.Adam(model.parameters(), lr=lr)
+
+    for ep in range(epochs):
+        for idx, (data, labels) in enumerate(train_loader):
+            opt.zero_grad()
+            out = model.forward(data)
+            loss = F.nll_loss(out, labels)
+            loss.backward()
+            opt.step()
+
+            if idx % 100 == 0:
+                print(
+                    "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
+                        ep,
+                        idx * len(data),
+                        len(train_loader.dataset),
+                        100.0 * idx / len(train_loader),
+                        loss.item(),
+                    )
+                )
+
+    with torch.no_grad():
+        test_loss = 0.0
+        correct = 0
+        for data, labels in val_loader:
+            out = model.forward(data)
+            test_loss += F.nll_loss(out, labels, reduction="sum").item()
+            pred = out.argmax(dim=1, keepdim=True)
+            correct += pred.eq(labels.view_as(pred)).sum().item()
+
+        test_loss /= len(val_loader.dataset)
+        print(
+            "\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n".format(
+                test_loss,
+                correct,
+                len(val_loader.dataset),
+                100.0 * correct / len(val_loader.dataset),
+            )
+        )
+
+    return test_loss, correct
+
+
 def main():
     transform = transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
@@ -114,10 +163,29 @@ def main():
             )
             train_iters[i] = iter(train_loaders[i])
 
+    # Save Directory
+    save_dir = (
+        "outputs/class_"
+        + data_split_type
+        + "_"
+        + datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    )
+    os.makedirs(save_dir)
+
+    # Solo Problems
+    solo_results = torch.zeros((N, 2))
+
+    for i in range(N):
+        solo_results[i, 0], solo_results[i, 1] = train_ind(
+            copy.deepcopy(base_model), train_loaders[i], val_loader
+        )
+
+    torch.save(solo_results, save_dir + "/soloresults.pt")
+
     # Setup Loss and CADMM
     primal_steps = 5
-    cadmm_iterations = 600
-    eval_every = 40
+    cadmm_iterations = 2000
+    eval_every = 20
     rho = 1.0
     lr = 0.005
 
@@ -184,7 +252,8 @@ def main():
             cnt_evals += 1
 
     torch.save(
-        {"obj_vals": obvs, "accuracy": accs}, "outputs/dist_class_results.pt"
+        {"obj_vals": obvs, "accuracy": accs},
+        save_dir + "/dist_class_results.pt",
     )
 
 
