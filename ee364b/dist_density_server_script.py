@@ -58,7 +58,7 @@ def main():
     G = nx.wheel_graph(N)
 
     # Setup models
-    shape = [2, 86, 32, 32, 32, 1]
+    shape = [2, 64, 32, 32, 1]
     scale = 0.01
     base_model = FourierNet(shape, scale=scale)
 
@@ -71,7 +71,7 @@ def main():
     num_beams = 20
     beam_samps = 20
     scan_dist = 0.2
-    num_scans = 1200
+    num_scans = 3000
     img_dir = "../floorplans/32_b.png"
 
     train_loaders = {}  # Dictionary of dataloaders for each node
@@ -98,11 +98,11 @@ def main():
     val_loader = torch.utils.data.DataLoader(val_set, batch_size=batch_size)
 
     # Setup Loss and CADMM
-    primal_steps = 2
-    cadmm_iterations = 1000
+    primal_steps = 20
+    cadmm_iterations = 2000
     eval_every = 40
     rho = 1.0
-    lr = 0.005
+    lr = 0.01
 
     num_params = torch.nn.utils.parameters_to_vector(
         models[0].parameters()
