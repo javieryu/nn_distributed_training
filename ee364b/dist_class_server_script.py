@@ -99,7 +99,7 @@ def train_ind(model, train_loader, val_loader):
         correct = 0
         for data, labels in val_loader:
             out = model.forward(data)
-            test_loss += F.nll_loss(out, labels, reduction="sum").item()
+            test_loss += F.nll_loss(out, labels).item()
             pred = out.argmax(dim=1, keepdim=True)
             correct += pred.eq(labels.view_as(pred)).sum().item()
 

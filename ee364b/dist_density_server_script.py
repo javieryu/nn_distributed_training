@@ -55,12 +55,12 @@ def validate(base_loss, val_loader, model):
 
 
 def main():
-    N = 5
+    N = 6
     G = nx.wheel_graph(N)
 
     # Setup models
-    shape = [2, 64, 32, 32, 1]
-    scale = 0.01
+    shape = [2, 86, 32, 32, 32, 1]
+    scale = 0.05
     base_model = FourierNet(shape, scale=scale)
 
     models = {i: copy.deepcopy(base_model) for i in range(N)}
@@ -115,11 +115,11 @@ def main():
     val_loader = torch.utils.data.DataLoader(val_set, batch_size=batch_size)
 
     # Setup Loss and CADMM
-    primal_steps = 20
+    primal_steps = 10
     cadmm_iterations = 2000
-    eval_every = 40
+    eval_every = 20
     rho = 1.0
-    lr = 0.01
+    lr = 0.005
 
     num_params = torch.nn.utils.parameters_to_vector(
         models[0].parameters()
@@ -177,7 +177,11 @@ def main():
         if k % eval_every == 0:
             cnt_evals += 1
 
-    save_dir = "outputs/" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    save_dir = (
+        "outputs/dense_"
+        + data_type
+        + datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    )
     os.makedirs(save_dir)
 
     torch.save(
