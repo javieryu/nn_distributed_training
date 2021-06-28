@@ -1,0 +1,20 @@
+experiment:
+  name: "dist_cnn_just_cadmm"
+  data_dir: "../data/"
+  output_metadir: "./outputs/"
+  data_split_type: "random"
+  evaluate_frequency: 20
+  graph_type: "wheel"
+  model:
+    num_filters: 3
+    kernel_size: 5
+    linear_width: 64
+optimizer_configs:
+  cadmm:
+    batch_size: 20
+    rho_init: 1e-5
+    rho_scaling: 1.0
+    outer_iterations: 2000
+    primal_iterations: 5
+    primal_optimizer: "adam"
+    primal_lr: 1e-5
