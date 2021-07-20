@@ -11,9 +11,10 @@ class MNISTConvNet(nn.Module):
 
     def __init__(self, num_filters, kernel_size, linear_width):
         super(MNISTConvNet, self).__init__()
-        self.conv = nn.Conv2d(1, num_filters, kernel_size)
-        conv_out_size = (28 - (kernel_size - 1)) ** 2
-        self.fc1 = nn.Linear(conv_out_size, linear_width)
+        self.conv = nn.Conv2d(1, num_filters, kernel_size, 1)
+        conv_out_width = 28 - (kernel_size - 1)
+        pool_out_width = int(conv_out_width / 2)
+        self.fc1 = nn.Linear(num_filters * (pool_out_width ** 2), linear_width)
         self.fc2 = nn.Linear(linear_width, 10)
 
     def forward(self, x):

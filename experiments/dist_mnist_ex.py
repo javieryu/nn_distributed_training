@@ -34,11 +34,11 @@ def experiment(yaml_pth):
         output_metadir, time_now + "_" + exp_conf["name"]
     )
 
-    os.mkdir(output_dir)
+    if exp_conf["writeout"]:
+        os.mkdir(output_dir)
+        # Save a copy of the conf to the output directory
+        copyfile(yaml_pth, os.path.join(output_dir, time_now + ".yaml"))
     exp_conf["output_dir"] = output_dir  # probably bad practice
-
-    # Save a copy of the conf to the output directory
-    copyfile(yaml_pth, os.path.join(output_dir, time_now + ".yaml"))
 
     # Create communication graph
     graph_conf = exp_conf["graph"]
@@ -62,8 +62,9 @@ def experiment(yaml_pth):
     else:
         raise NameError("Unknown communication graph type.")
 
-    # Save the graph for future visualization
-    nx.write_gpickle(graph, os.path.join(output_dir, "graph.gpickle"))
+    if exp_conf["writeout"]:
+        # Save the graph for future visualization
+        nx.write_gpickle(graph, os.path.join(output_dir, "graph.gpickle"))
 
     # Load the data
     transform = transforms.Compose(
@@ -87,9 +88,9 @@ def experiment(yaml_pth):
         if N <= len(classes):
             joint_labels = joint_train_set.targets
             node_classes = torch.split(classes, int(len(classes) / N))
-            for _ in range(N):
+            for i in range(N):
                 # from here: https://discuss.pytorch.org/t/tensor-indexing-with-conditions/81297/2
-                locs = [lab == joint_labels for lab in node_classes]
+                locs = [lab == joint_labels for lab in node_classes[i]]
                 idx_keep = torch.nonzero(torch.stack(locs).sum(0)).reshape(-1)
                 train_subsets.append(
                     torch.utils.data.Subset(joint_train_set, idx_keep)
@@ -130,7 +131,8 @@ def experiment(yaml_pth):
             raise NameError("Unknown distributed opt algorithm.")
 
         dopt.train()
-        prob.save_metrics(output_dir)
+        if exp_conf["writeout"]:
+            prob.save_metrics(output_dir)
 
     # REPEAT:
     #  - Create problem

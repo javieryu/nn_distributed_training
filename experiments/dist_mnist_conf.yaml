@@ -2,11 +2,12 @@ experiment:
   name: "dist_cnn_just_cadmm"
   data_dir: "../data/"
   output_metadir: "./outputs/"
-  data_split_type: "random"
+  writeout: true
+  data_split_type: "hetero"
   loss: "NLL"
   graph:
-    num_nodes: 10
-    type: "random"
+    num_nodes: 5
+    type: "wheel"
     p: 0.6
     gen_attempts: 10
   model:
@@ -27,9 +28,9 @@ problem_configs:
       - "current_epoch"
 optimizer_configs:
   cadmm:
-    rho_init: 1e-5
+    rho_init: 1.0
     rho_scaling: 1.0
-    outer_iterations: 5
+    outer_iterations: 30
     primal_iterations: 5
     primal_optimizer: "adam"
-    primal_lr: 1e-5
+    primal_lr: 0.005

@@ -13,21 +13,21 @@ class CADMM:
         self.primal_lr = self.conf["primal_lr"]
         self.pits = self.conf["primal_iterations"]
 
-    def primal_update(self, i, neighs, ths):
-        if self.conf["inner_optimizer"] == "adam":
+    def primal_update(self, i, thj):
+        if self.conf["primal_optimizer"] == "adam":
             opt = torch.optim.Adam(
                 self.pr.models[i].parameters(), self.primal_lr
             )
-        elif self.conf["inner_optimizer"] == "sgd":
+        elif self.conf["primal_optimizer"] == "sgd":
             opt = torch.optim.SGD(
                 self.pr.models[i].parameters(), self.primal_lr
             )
-        elif self.conf["inner_optimizer"] == "adamw":
+        elif self.conf["primal_optimizer"] == "adamw":
             opt = torch.optim.AdamW(
                 self.pr.models[i].parameters(), self.primal_lr
             )
         else:
-            raise NameError("CADMM Inner Optimizer is unknown.")
+            raise NameError("CADMM primal optimizer is unknown.")
 
         for _ in range(self.pits):
             opt.zero_grad()
@@ -38,13 +38,9 @@ class CADMM:
             # Get the primal variable WITH the autodiff graph attached.
             th = torch.nn.utils.parameters_to_vector(
                 self.pr.models[i].parameters()
-            ).reshape(-1, 1)
-
-            reg = sum(
-                torch.square(
-                    torch.norm(th - ths[j].reshape(1, -1)) for j in neighs
-                )
             )
+
+            reg = torch.sum(torch.square(torch.cdist(th.reshape(1, -1), thj)))
 
             loss = pred_loss + torch.dot(th, self.duals[i]) + self.rho * reg
             loss.backward()
@@ -53,9 +49,11 @@ class CADMM:
         return
 
     def train(self):
-        eval_every = self.pr["evaluate_frequency"]
+        eval_every = self.pr.conf["evaluate_frequency"]
         oits = self.conf["outer_iterations"]
         for k in range(oits):
+            if k % eval_every == 0 or k == oits - 1:
+                self.pr.evaluate_metrics()
             # Get the current primal variables
             ths = {
                 i: torch.nn.utils.parameters_to_vector(
@@ -71,14 +69,10 @@ class CADMM:
 
             # Per node updates
             for i in range(self.pr.N):
-                if k % eval_every == 0 or k == oits - 1:
-                    self.pr.evaluate_metrics()
-
                 neighs = list(self.pr.graph.neighbors(i))
+                thj = torch.stack([ths[j] for j in neighs])
 
-                self.duals[i] += self.rho * sum(
-                    ths[i] - ths[j] for j in neighs
-                )
-                self.primal_update(i, neighs, ths)
+                self.duals[i] += self.rho * torch.sum(ths[i] - thj, dim=0)
+                self.primal_update(i, thj)
 
         return

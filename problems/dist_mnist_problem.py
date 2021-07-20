@@ -46,7 +46,7 @@ class DistMNISTProblem:
                 shuffle=True,
             )
 
-            self.train_iters = iter(self.train_loaders[i])
+            self.train_iters[i] = iter(self.train_loaders[i])
 
         self.val_loader = torch.utils.data.DataLoader(
             self.val_set, batch_size=self.conf["val_batch_size"]
@@ -86,7 +86,7 @@ class DistMNISTProblem:
             # Count the number of forward passes that have been performed
             # because this is symmetric across nodes we only have to do
             # this for node 0, and it will be consistent with all nodes.
-            self.forward_cnt += 1
+            self.forward_cnt += self.conf["batch_size"]
 
         yh = self.models[i].forward(x)
 
@@ -126,8 +126,8 @@ class DistMNISTProblem:
             "validation_loss" in self.metrics
             or "top1_accuracy" in self.metrics
         ):
-            avg_losses = torch.zeros((1, self.N))
-            accs = torch.zeros((1, self.N))
+            avg_losses = torch.zeros(self.N)
+            accs = torch.zeros(self.N)
             for i in range(self.N):
                 avg_losses[i], accs[i] = self.validate(i)
 
