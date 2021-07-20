@@ -8,7 +8,12 @@ from torchvision import datasets, transforms
 import torch
 import networkx as nx
 
-from models import mnist_conv_nn
+sys.path.insert(0, "../models/")
+sys.path.insert(0, "../problems/")
+sys.path.insert(0, "../optimizers/")
+from mnist_conv_nn import MNISTConvNet
+from dist_mnist_problem import DistMNISTProblem
+from cadmm import CADMM
 
 
 def experiment(yaml_pth):
@@ -18,7 +23,6 @@ def experiment(yaml_pth):
 
     # Seperate configuration groups
     exp_conf = conf_dict["experiment"]
-    opt_confs = conf_dict["optimizer_configs"]
 
     # Create the output directory
     output_metadir = exp_conf["output_metadir"]
@@ -36,26 +40,97 @@ def experiment(yaml_pth):
     # Save a copy of the conf to the output directory
     copyfile(yaml_pth, os.path.join(output_dir, time_now + ".yaml"))
 
+    # Create communication graph
+    graph_conf = exp_conf["graph"]
+    N = graph_conf["num_nodes"]
+    if graph_conf["type"] == "wheel":
+        graph = nx.wheel_graph(N)
+    elif graph_conf["type"] == "random":
+        # Attempt to make a random graph until it is connected
+        graph = nx.erdos_renyi_graph(N, graph_conf["p"])
+        for _ in range(graph_conf["gen_attempts"]):
+            if nx.is_connected(graph):
+                break
+            else:
+                graph = nx.erdos_renyi_graph(N, graph_conf["p"])
+
+        if not nx.is_connected(graph):
+            raise NameError(
+                "A connected random graph could not be generated,"
+                " increase p or gen_attempts."
+            )
+    else:
+        raise NameError("Unknown communication graph type.")
+
+    # Save the graph for future visualization
+    nx.write_gpickle(graph, os.path.join(output_dir, "graph.gpickle"))
+
     # Load the data
     transform = transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
     )
     data_dir = exp_conf["data_dir"]
-    train_set = datasets.MNIST(
+    joint_train_set = datasets.MNIST(
         data_dir, train=True, download=True, transform=transform
     )
     val_set = datasets.MNIST(data_dir, train=False, transform=transform)
 
+    if exp_conf["data_split_type"] == "random":
+        num_samples_per = len(joint_train_set.targets) / N
+        joint_splits = [int(num_samples_per) for _ in range(N)]
+        train_subsets = torch.utils.data.random_split(
+            joint_train_set, joint_splits
+        )
+    elif exp_conf["data_split_type"] == "hetero":
+        classes = torch.unique(joint_train_set.targets)
+        train_subsets = []
+        if N <= len(classes):
+            joint_labels = joint_train_set.targets
+            node_classes = torch.split(classes, int(len(classes) / N))
+            for _ in range(N):
+                # from here: https://discuss.pytorch.org/t/tensor-indexing-with-conditions/81297/2
+                locs = [lab == joint_labels for lab in node_classes]
+                idx_keep = torch.nonzero(torch.stack(locs).sum(0)).reshape(-1)
+                train_subsets.append(
+                    torch.utils.data.Subset(joint_train_set, idx_keep)
+                )
+        else:
+            raise NameError("Hetero MNIST N > 10 not supported.")
+
     # Create base model
     model_conf = exp_conf["model"]
-    base_model = mnist_conv_nn.MNISTConvNet(
+    base_model = MNISTConvNet(
         model_conf["num_filters"],
         model_conf["kernel_size"],
         model_conf["linear_width"],
     )
 
-    # Create communication graph
     # Define base loss function
+    if exp_conf["loss"] == "NLL":
+        base_loss = torch.nn.NLLLoss()
+    else:
+        raise NameError("Unknown loss function.")
+
+    # Run each optimizer on the problem
+    opt_confs = conf_dict["optimizer_configs"]
+    prob_confs = conf_dict["problem_configs"]
+    for alg_name in opt_confs.keys():
+        prob = DistMNISTProblem(
+            graph,
+            base_model,
+            base_loss,
+            train_subsets,
+            val_set,
+            prob_confs[alg_name],
+        )
+
+        if alg_name == "cadmm":
+            dopt = CADMM(prob, opt_confs[alg_name])
+        else:
+            raise NameError("Unknown distributed opt algorithm.")
+
+        dopt.train()
+        prob.save_metrics(output_dir)
 
     # REPEAT:
     #  - Create problem

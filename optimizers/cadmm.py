@@ -33,7 +33,7 @@ class CADMM:
             opt.zero_grad()
 
             # Model pass on the batch
-            pred_loss = self.pr.forward_batch(i)
+            pred_loss = self.pr.local_batch_loss(i)
 
             # Get the primal variable WITH the autodiff graph attached.
             th = torch.nn.utils.parameters_to_vector(

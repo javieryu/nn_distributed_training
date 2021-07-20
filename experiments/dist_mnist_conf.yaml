@@ -3,18 +3,33 @@ experiment:
   data_dir: "../data/"
   output_metadir: "./outputs/"
   data_split_type: "random"
-  evaluate_frequency: 20
-  graph_type: "wheel"
+  loss: "NLL"
+  graph:
+    num_nodes: 10
+    type: "random"
+    p: 0.6
+    gen_attempts: 10
   model:
     num_filters: 3
     kernel_size: 5
     linear_width: 64
+problem_configs:
+  cadmm:
+    batch_size: 64
+    val_batch_size: 128
+    evaluate_frequency: 20
+    verbose_evals: True
+    metrics:
+      - "forward_pass_count"
+      - "validation_loss"
+      - "consensus_error"
+      - "top1_accuracy"
+      - "current_epoch"
 optimizer_configs:
   cadmm:
-    batch_size: 20
     rho_init: 1e-5
     rho_scaling: 1.0
-    outer_iterations: 2000
+    outer_iterations: 5
     primal_iterations: 5
     primal_optimizer: "adam"
     primal_lr: 1e-5
