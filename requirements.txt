@@ -4,3 +4,4 @@ pip-chill
 scipy
 torchvision
 torch
+pyyaml
