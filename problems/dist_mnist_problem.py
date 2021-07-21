@@ -146,9 +146,10 @@ class DistMNISTProblem:
                     # Stack all of the parameters into rows
                     th_stack = torch.stack(all_params)
                     # Compute row-wise distances
-                    davg = torch.cdist(th_stack, th_stack).sum(axis=1) / self.N
+                    distances = torch.cdist(th_stack, th_stack)
+                    davg = distances.sum(axis=1) / self.N
                 # append metrics and generate print string
-                self.metrics[met_name].append(davg)
+                self.metrics[met_name].append(distances)
                 evalprint += "Consensus: {:.4f} - {:.4f} | ".format(
                     torch.amin(davg).item(), torch.amax(davg).item()
                 )
@@ -172,7 +173,7 @@ class DistMNISTProblem:
             elif met_name == "current_epoch":
                 # Current epoch of each node (only different if the datasets at
                 # each node are not the same size)
-                self.metrics[met_name].append(self.epoch_tracker)
+                self.metrics[met_name].append(copy(self.epoch_tracker))
                 evalprint += "Ep Range: {} - {} | ".format(
                     int(torch.amin(self.epoch_tracker).item()),
                     int(torch.amax(self.epoch_tracker).item()),
