@@ -173,7 +173,9 @@ class DistMNISTProblem:
             elif met_name == "current_epoch":
                 # Current epoch of each node (only different if the datasets at
                 # each node are not the same size)
-                self.metrics[met_name].append(copy(self.epoch_tracker))
+                self.metrics[met_name].append(
+                    copy.deepcopy(self.epoch_tracker)
+                )
                 evalprint += "Ep Range: {} - {} | ".format(
                     int(torch.amin(self.epoch_tracker).item()),
                     int(torch.amax(self.epoch_tracker).item()),
