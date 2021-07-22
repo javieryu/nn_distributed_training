@@ -42,7 +42,7 @@ class DistMNISTProblem:
         for i in range(self.N):
             self.train_loaders[i] = torch.utils.data.DataLoader(
                 self.train_sets[i],
-                batch_size=self.conf["batch_size"],
+                batch_size=self.conf["train_batch_size"],
                 shuffle=True,
             )
 
@@ -86,7 +86,7 @@ class DistMNISTProblem:
             # Count the number of forward passes that have been performed
             # because this is symmetric across nodes we only have to do
             # this for node 0, and it will be consistent with all nodes.
-            self.forward_cnt += self.conf["batch_size"]
+            self.forward_cnt += self.conf["train_batch_size"]
 
         yh = self.models[i].forward(x)
 
@@ -94,8 +94,9 @@ class DistMNISTProblem:
 
     def save_metrics(self, output_dir):
         """Save current metrics lists to a PT file."""
-        file_name = os.path.join(output_dir, "metrics.pt")
-        torch.save(self.metrics, file_name)
+        file_name = self.conf["problem_name"] + "_results.pt"
+        file_path = os.path.join(output_dir, file_name)
+        torch.save(self.metrics, file_path)
         return
 
     def validate(self, i):
@@ -146,9 +147,10 @@ class DistMNISTProblem:
                     # Stack all of the parameters into rows
                     th_stack = torch.stack(all_params)
                     # Compute row-wise distances
-                    davg = torch.cdist(th_stack, th_stack).sum(axis=1) / self.N
+                    distances = torch.cdist(th_stack, th_stack)
+                    davg = distances.sum(axis=1) / self.N
                 # append metrics and generate print string
-                self.metrics[met_name].append(davg)
+                self.metrics[met_name].append(distances)
                 evalprint += "Consensus: {:.4f} - {:.4f} | ".format(
                     torch.amin(davg).item(), torch.amax(davg).item()
                 )
@@ -172,7 +174,9 @@ class DistMNISTProblem:
             elif met_name == "current_epoch":
                 # Current epoch of each node (only different if the datasets at
                 # each node are not the same size)
-                self.metrics[met_name].append(self.epoch_tracker)
+                self.metrics[met_name].append(
+                    copy.deepcopy(self.epoch_tracker)
+                )
                 evalprint += "Ep Range: {} - {} | ".format(
                     int(torch.amin(self.epoch_tracker).item()),
                     int(torch.amax(self.epoch_tracker).item()),

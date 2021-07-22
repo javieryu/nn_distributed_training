@@ -113,23 +113,28 @@ def experiment(yaml_pth):
         raise NameError("Unknown loss function.")
 
     # Run each optimizer on the problem
-    opt_confs = conf_dict["optimizer_configs"]
     prob_confs = conf_dict["problem_configs"]
-    for alg_name in opt_confs.keys():
+    for prob_key in prob_confs:
+        prob_conf = prob_confs[prob_key]
+        opt_conf = prob_conf["optimizer_config"]
+
         prob = DistMNISTProblem(
             graph,
             base_model,
             base_loss,
             train_subsets,
             val_set,
-            prob_confs[alg_name],
+            prob_conf,
         )
 
-        if alg_name == "cadmm":
-            dopt = CADMM(prob, opt_confs[alg_name])
+        if opt_conf["alg_name"] == "cadmm":
+            dopt = CADMM(prob, opt_conf)
         else:
             raise NameError("Unknown distributed opt algorithm.")
 
+        print("-------------------------------------------------------")
+        print("-------------------------------------------------------")
+        print("Running problem: " + prob_conf["problem_name"])
         dopt.train()
         if exp_conf["writeout"]:
             prob.save_metrics(output_dir)
