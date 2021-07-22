@@ -1,5 +1,5 @@
 experiment:
-  name: "dist_cnn_just_cadmm"
+  name: "dist_cnn_cadmm_scaled_v_const"
   data_dir: "../data/"
   output_metadir: "./outputs/"
   writeout: true
@@ -15,8 +15,9 @@ experiment:
     kernel_size: 5
     linear_width: 64
 problem_configs:
-  cadmm:
-    batch_size: 64
+  problem1:
+    problem_name: "vanilla_cadmm"
+    train_batch_size: 64
     val_batch_size: 128
     evaluate_frequency: 20
     verbose_evals: True
@@ -26,11 +27,31 @@ problem_configs:
       - "consensus_error"
       - "top1_accuracy"
       - "current_epoch"
-optimizer_configs:
-  cadmm:
-    rho_init: 1.0
-    rho_scaling: 1.0
-    outer_iterations: 30
-    primal_iterations: 5
-    primal_optimizer: "adam"
-    primal_lr: 0.005
+    optimizer_config:
+      alg_name: "cadmm"
+      rho_init: 1.0
+      rho_scaling: 1.0
+      outer_iterations: 30
+      primal_iterations: 5
+      primal_optimizer: "adam"
+      primal_lr: 0.005
+  problem2:
+    problem_name: "scaled_cadmm"
+    train_batch_size: 64
+    val_batch_size: 128
+    evaluate_frequency: 20
+    verbose_evals: True
+    metrics:
+      - "forward_pass_count"
+      - "validation_loss"
+      - "consensus_error"
+      - "top1_accuracy"
+      - "current_epoch"
+    optimizer_config:
+      alg_name: "cadmm"
+      rho_init: 1.e-3
+      rho_scaling: 1.02
+      outer_iterations: 30
+      primal_iterations: 5
+      primal_optimizer: "adam"
+      primal_lr: 0.005
