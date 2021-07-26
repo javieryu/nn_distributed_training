@@ -146,6 +146,8 @@ class DistMNISTProblem:
                     ]
                     # Stack all of the parameters into rows
                     th_stack = torch.stack(all_params)
+                    # Normalize the stack
+                    th_stack = torch.nn.functional.normalize(th_stack, dim=1)
                     # Compute row-wise distances
                     distances = torch.cdist(th_stack, th_stack)
                     davg = distances.sum(axis=1) / self.N
