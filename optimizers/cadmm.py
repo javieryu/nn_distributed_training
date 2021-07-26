@@ -13,7 +13,7 @@ class CADMM:
         self.primal_lr = self.conf["primal_lr"]
         self.pits = self.conf["primal_iterations"]
 
-    def primal_update(self, i, thj):
+    def primal_update(self, i, th_reg):
         if self.conf["primal_optimizer"] == "adam":
             opt = torch.optim.Adam(
                 self.pr.models[i].parameters(), self.primal_lr
@@ -40,7 +40,9 @@ class CADMM:
                 self.pr.models[i].parameters()
             )
 
-            reg = torch.sum(torch.square(torch.cdist(th.reshape(1, -1), thj)))
+            reg = torch.sum(
+                torch.square(torch.cdist(th.reshape(1, -1), th_reg))
+            )
 
             loss = pred_loss + torch.dot(th, self.duals[i]) + self.rho * reg
             loss.backward()
@@ -73,6 +75,7 @@ class CADMM:
                 thj = torch.stack([ths[j] for j in neighs])
 
                 self.duals[i] += self.rho * torch.sum(ths[i] - thj, dim=0)
-                self.primal_update(i, thj)
+                th_reg = (thj + ths[i]) / 2.0
+                self.primal_update(i, th_reg)
 
         return
