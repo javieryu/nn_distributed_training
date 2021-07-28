@@ -11,9 +11,13 @@ import networkx as nx
 sys.path.insert(0, "../models/")
 sys.path.insert(0, "../problems/")
 sys.path.insert(0, "../optimizers/")
+sys.path.insert(0, "../utils/")
 from mnist_conv_nn import MNISTConvNet
 from dist_mnist_problem import DistMNISTProblem
 from cadmm import CADMM
+import graph_generation
+
+torch.set_default_tensor_type(torch.DoubleTensor)
 
 
 def experiment(yaml_pth):
@@ -42,25 +46,7 @@ def experiment(yaml_pth):
 
     # Create communication graph
     graph_conf = exp_conf["graph"]
-    N = graph_conf["num_nodes"]
-    if graph_conf["type"] == "wheel":
-        graph = nx.wheel_graph(N)
-    elif graph_conf["type"] == "random":
-        # Attempt to make a random graph until it is connected
-        graph = nx.erdos_renyi_graph(N, graph_conf["p"])
-        for _ in range(graph_conf["gen_attempts"]):
-            if nx.is_connected(graph):
-                break
-            else:
-                graph = nx.erdos_renyi_graph(N, graph_conf["p"])
-
-        if not nx.is_connected(graph):
-            raise NameError(
-                "A connected random graph could not be generated,"
-                " increase p or gen_attempts."
-            )
-    else:
-        raise NameError("Unknown communication graph type.")
+    N, graph = graph_generation.generate_from_conf(graph_conf)
 
     if exp_conf["writeout"]:
         # Save the graph for future visualization

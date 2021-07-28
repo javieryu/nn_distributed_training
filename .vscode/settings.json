@@ -9,7 +9,9 @@
     "python.analysis.extraPaths": [
         "./optimizers",
         "./problems",
-        "./models"
+        "./models",
+        "./utils",
+        "./floorplans"
     ],
     "spellright.language": [
         "en_US"
