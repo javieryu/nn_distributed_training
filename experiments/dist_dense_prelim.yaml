@@ -23,7 +23,7 @@ experiment:
 problem_configs:
   problem1:
     problem_name: "vanilla_cadmm"
-    train_batch_size: 10000
+    train_batch_size: 5000
     val_batch_size: 10000
     evaluate_frequency: 20
     verbose_evals: True
@@ -35,9 +35,9 @@ problem_configs:
       - "current_epoch"
     optimizer_config:
       alg_name: "cadmm"
-      rho_init: 1.0
+      rho_init: 0.5
       rho_scaling: 1.0
       outer_iterations: 1500
-      primal_iterations: 10
+      primal_iterations: 5
       primal_optimizer: "adam"
       primal_lr: 0.005
