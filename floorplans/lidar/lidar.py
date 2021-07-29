@@ -149,23 +149,28 @@ class TrajectoryLidarDataset(torch.utils.data.Dataset):
         super().__init__()
         self.img = np.asarray(Image.open(img_dir)).astype(float) / 255.0
         self.lidar = Lidar2D(self.img, num_beams, scan_dist_scale, beam_samps)
-        self.traj = np.flip(trajectory, 1) # get [x, y]    
+        self.traj = np.flip(trajectory, 1)  # get [x, y]
         num_scans = trajectory.shape[0]
-        
+
         self.scan_locs = np.empty([num_scans, 2])
         scan_list = []
         for k in range(num_scans):
             pos = self.__img2lidar__(self.traj[k, :].reshape(1, 2))
-            self.scan_locs[k,:] = pos
+            self.scan_locs[k, :] = pos
             scan_list.append(self.lidar.scan(pos))
 
         self.scans = torch.from_numpy(np.vstack(scan_list))
 
         if round_density:
             self.scans[:, 2] = np.rint(self.scans[:, 2])
-    
+
     def __img2lidar__(self, img_idx):
-        return np.array([self.lidar.nx, self.lidar.ny]) * ((img_idx / np.array([self.lidar.nx-1, self.lidar.ny-1]) - np.array([0.5, 0.5])))
+        return np.array([self.lidar.nx, self.lidar.ny]) * (
+            (
+                img_idx / np.array([self.lidar.nx - 1, self.lidar.ny - 1])
+                - np.array([0.5, 0.5])
+            )
+        )
 
     def __getitem__(self, idx):
         meta_dict = {

@@ -1,17 +1,10 @@
-import os
-import copy
-
 import torch
+import copy
+import os
+import numpy as np
 
 
-class DistMNISTProblem:
-    """An object that manages the various datastructures for a distributed
-    optimization problem on the MNIST classification problem. In addition,
-    it computes, stores, and writes out relevant metrics.
-
-    Author: Javier Yu, javieryu@stanford.edu, July 20, 2021
-    """
-
+class DistDensityProblem:
     def __init__(
         self,
         graph,
@@ -27,16 +20,15 @@ class DistMNISTProblem:
         self.val_set = val_set
         self.conf = conf
 
-        # Extract some useful info
         self.N = graph.number_of_nodes()
         self.n = torch.nn.utils.parameters_to_vector(
             base_model.parameters()
         ).shape[0]
 
-        # Copy the base_model for each node
+        # Copy the base model for each node
         self.models = {i: copy.deepcopy(base_model) for i in range(self.N)}
 
-        # Create train loaders and iterators with specified batch size
+        # Create train loaders and iterators with the specified batch size
         self.train_loaders = {}
         self.train_iters = {}
         for i in range(self.N):
@@ -57,6 +49,16 @@ class DistMNISTProblem:
         self.epoch_tracker = torch.zeros(self.N)
         self.forward_cnt = 0
 
+        if "mesh_grid_density" in self.metrics:
+            X, Y = np.meshgrid(val_set.lidar.xs, val_set.lidar.ys)
+            xlocs = X[::8, ::8].reshape(-1, 1)
+            ylocs = Y[::8, ::8].reshape(-1, 1)
+            mesh_poses = np.hstack((xlocs, ylocs))
+            self.mesh_inputs = torch.Tensor(mesh_poses)
+
+            # For reconstruction during visualization
+            self.metrics["mesh_inputs"] = self.mesh_inputs
+
     def local_batch_loss(self, i):
         """Forward pass on a batch data for model at node i,
         and if it's node_id = 0 then increment a metric that
@@ -76,11 +78,11 @@ class DistMNISTProblem:
             local data.
         """
         try:
-            x, y = next(self.train_iters[i])
+            batch = next(self.train_iters[i])
         except StopIteration:
             self.epoch_tracker[i] += 1
             self.train_iters[i] = iter(self.train_loaders[i])
-            x, y = next(self.train_iters[i])
+            batch = next(self.train_iters[i])
 
         if i == 0:
             # Count the number of forward passes that have been performed
@@ -88,9 +90,9 @@ class DistMNISTProblem:
             # this for node 0, and it will be consistent with all nodes.
             self.forward_cnt += self.conf["train_batch_size"]
 
-        yh = self.models[i].forward(x)
+        yh = self.models[i].forward(batch["position"])
 
-        return self.base_loss(yh, y)
+        return self.base_loss(yh, batch["density"])
 
     def save_metrics(self, output_dir):
         """Save current metrics lists to a PT file."""
@@ -100,37 +102,38 @@ class DistMNISTProblem:
         return
 
     def validate(self, i):
-        """Compute the loss and accuracy of a
-        single node's model on the validation set.
+        """Compute the loss of a single node on the validation set.
 
         Args:
             i (int): Node id
         """
+        val_loss = 0.0
+        for batch in self.val_loader:
+            with torch.no_grad():
+                yh = self.models[i].forward(batch["position"])
+                val_loss += self.base_loss(yh, batch["density"]).data.detach()
+        return val_loss
+
+    def mesh_grid_density(self, i):
+        """Computes the predicted density of the specified model on
+        a mesh. This differs from the validation set because we should
+        not count the loss of the model in regions where there is no
+        training data (ie inside of walls).
+
+        Args:
+            i (int): Node id
+
+        Returns:
+            torch.Tensor: A vector of densities corresponding to the
+            poses specified by the mesh that is created during initialization.
+        """
         with torch.no_grad():
-            loss = 0.0
-            correct = 0
-            for x, y in self.val_loader:
-                yh = self.models[i].forward(x)
-                loss += self.base_loss(yh, y).item()
-                pred = yh.argmax(dim=1, keepdim=True)
-                correct += pred.eq(y.view_as(pred)).sum().item()
-            avg_loss = loss / len(self.val_loader.dataset)
-            acc = correct / len(self.val_loader.dataset)
-            return avg_loss, acc
+            mesh_density = self.models[i].forward(self.mesh_inputs)
+
+        return mesh_density
 
     def evaluate_metrics(self):
         """Evaluate models, and then append values to the metric lists."""
-
-        # Compute validation loss and accuracy (if you do one you might
-        # as well do the other)
-        if (
-            "validation_loss" in self.metrics
-            or "top1_accuracy" in self.metrics
-        ):
-            avg_losses = torch.zeros(self.N)
-            accs = torch.zeros(self.N)
-            for i in range(self.N):
-                avg_losses[i], accs[i] = self.validate(i)
 
         evalprint = "| "
         for met_name in self.conf["metrics"]:
@@ -158,17 +161,20 @@ class DistMNISTProblem:
                 )
             elif met_name == "validation_loss":
                 # Average node loss on the validation dataset
-                self.metrics[met_name].append(avg_losses)
+                val_losses = [self.validate(i) for i in range(self.N)]
+                val_losses = torch.tensor(val_losses)
+
+                self.metrics[met_name].append(val_losses)
                 evalprint += "Val Loss: {:.4f} - {:.4f} | ".format(
-                    torch.amin(avg_losses).item(),
-                    torch.amax(avg_losses).item(),
+                    torch.amin(val_losses).item(),
+                    torch.amax(val_losses).item(),
                 )
-            elif met_name == "top1_accuracy":
-                # Top1 accuracy of nodes on the validation dataset
-                self.metrics[met_name].append(accs)
-                evalprint += "Top1: {:.2f} - {:.2f} |".format(
-                    torch.amin(accs).item(), torch.amax(accs).item()
-                )
+            elif met_name == "mesh_grid_density":
+                # Compute the mesh grid densities of each node
+                # used for post run visualization so there is no
+                # need to print anything.
+                densities = [self.mesh_grid_density(i) for i in range(self.N)]
+                self.metrics[met_name].append(torch.stack(densities))
             elif met_name == "forward_pass_count":
                 # Number of forward passes performed by each node
                 self.metrics[met_name].append(self.forward_cnt)
