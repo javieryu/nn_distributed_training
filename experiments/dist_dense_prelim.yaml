@@ -1,6 +1,6 @@
 experiment:
   name: "dist_dense_template"
-  output_metadir: "./outputs/"
+  output_metadir: "../results/"
   writeout: true
   data:
     data_dir: "../floorplans/32_data/"
