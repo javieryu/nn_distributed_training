@@ -38,7 +38,7 @@ problem_configs:
       alg_name: "cadmm"
       rho_init: 0.1
       rho_scaling: 1.0
-      outer_iterations: 30
+      outer_iterations: 2000
       primal_iterations: 5
       primal_optimizer: "adam"
       primal_lr: 0.03
