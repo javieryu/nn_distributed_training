@@ -1,5 +1,5 @@
 experiment:
-  name: "dist_dense_template"
+  name: "dist_dense_tuning1"
   output_metadir: "../results/"
   writeout: true
   use_cuda: true
