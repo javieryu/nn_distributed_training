@@ -6,7 +6,15 @@ class CADMM:
         self.pr = ddl_problem
         self.conf = conf
 
-        self.duals = {i: torch.zeros(self.pr.n) for i in range(self.pr.N)}
+        if torch.cuda.is_available():
+            device = torch.device("cuda")
+        else:
+            device = torch.device("cpu")
+
+        self.duals = {
+            i: torch.zeros((self.pr.n), device=device)
+            for i in range(self.pr.N)
+        }
 
         self.rho = self.conf["rho_init"]
         self.rho_scaling = self.conf["rho_scaling"]
