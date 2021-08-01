@@ -41,4 +41,4 @@ problem_configs:
       outer_iterations: 2000
       primal_iterations: 5
       primal_optimizer: "adam"
-      primal_lr: 0.03
+      primal_lr: 0.01
