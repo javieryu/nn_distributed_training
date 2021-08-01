@@ -130,6 +130,12 @@ def experiment(yaml_pth):
     else:
         raise NameError("Unknown loss function.")
 
+    # Check for gpu and assign device
+    if torch.cuda.is_available() and exp_conf["use_cuda"]:
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")
+
     # Run each problem
     prob_confs = conf_dict["problem_configs"]
 
@@ -142,7 +148,7 @@ def experiment(yaml_pth):
         )
 
         if opt_conf["alg_name"] == "cadmm":
-            dopt = CADMM(prob, opt_conf)
+            dopt = CADMM(prob, device, opt_conf)
         else:
             raise NameError("Unknown distributed opt algorithm.")
 

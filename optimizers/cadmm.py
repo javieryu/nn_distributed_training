@@ -2,14 +2,9 @@ import torch
 
 
 class CADMM:
-    def __init__(self, ddl_problem, conf):
+    def __init__(self, ddl_problem, device, conf):
         self.pr = ddl_problem
         self.conf = conf
-
-        if torch.cuda.is_available():
-            device = torch.device("cuda")
-        else:
-            device = torch.device("cpu")
 
         self.duals = {
             i: torch.zeros((self.pr.n), device=device)

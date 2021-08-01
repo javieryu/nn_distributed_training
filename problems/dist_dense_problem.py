@@ -12,6 +12,7 @@ class DistDensityProblem:
         base_loss,
         train_sets,
         val_set,
+        device,
         conf,
     ):
         self.graph = graph
@@ -60,16 +61,13 @@ class DistDensityProblem:
             self.metrics["mesh_inputs"] = self.mesh_inputs
 
         # Device check for GPU
-        if torch.cuda.is_available():
-            self.device = torch.device("cuda")
+        self.device = device
 
-            # send all of the models to the GPU
-            for i in range(self.N):
-                self.models[i] = self.models[i].to(self.device)
+        # send all of the models to the GPU
+        for i in range(self.N):
+            self.models[i] = self.models[i].to(self.device)
 
-            self.mesh_inputs = self.mesh_inputs.to(self.device)
-        else:
-            self.device = torch.device("cpu")
+        self.mesh_inputs = self.mesh_inputs.to(self.device)
 
     def local_batch_loss(self, i):
         """Forward pass on a batch data for model at node i,
