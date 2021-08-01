@@ -144,7 +144,13 @@ def experiment(yaml_pth):
         opt_conf = prob_conf["optimizer_config"]
 
         prob = DistDensityProblem(
-            graph, base_model, base_loss, train_subsets, val_set, prob_conf
+            graph,
+            base_model,
+            base_loss,
+            train_subsets,
+            val_set,
+            device,
+            prob_conf,
         )
 
         if opt_conf["alg_name"] == "cadmm":
