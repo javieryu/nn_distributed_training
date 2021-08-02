@@ -5,7 +5,7 @@ experiment:
   use_cuda: true
   data:
     data_dir: "../floorplans/32_data/"
-    split_type: "random"
+    split_type: "trajectory"
     num_beams: 20
     beam_samps: 20
     scan_dist_scale: 0.2
@@ -14,17 +14,25 @@ experiment:
     num_validation_scans: 500 
   loss: "BCE"
   graph:
-    num_nodes: 3
+    num_nodes: 6
     type: "wheel"
     p: 0.6
     gen_attempts: 10
   model:
     shape: [2, 86, 32, 32, 32, 1]
     scale: 0.05
+  individual_training:
+    train_solo: True
+    optimizer: "adam"
+    lr: 0.005
+    epochs: 6
+    train_batch_size: 10000
+    val_batch_size: 10000
+    verbose: True
 problem_configs:
   problem1:
-    problem_name: "vanilla_cadmm"
-    train_batch_size: 7000
+    problem_name: "primal_iterations_5"
+    train_batch_size: 10000
     val_batch_size: 10000
     evaluate_frequency: 20
     verbose_evals: True
@@ -38,7 +46,47 @@ problem_configs:
       alg_name: "cadmm"
       rho_init: 0.1
       rho_scaling: 1.0
-      outer_iterations: 2000
+      outer_iterations: 500
       primal_iterations: 5
+      primal_optimizer: "adam"
+      primal_lr: 0.01
+  problem2:
+    problem_name: "primal_iterations_10"
+    train_batch_size: 10000
+    val_batch_size: 10000
+    evaluate_frequency: 20
+    verbose_evals: True
+    metrics:
+      - "forward_pass_count"
+      - "validation_loss"
+      - "consensus_error"
+      - "mesh_grid_density"
+      - "current_epoch"
+    optimizer_config:
+      alg_name: "cadmm"
+      rho_init: 0.1
+      rho_scaling: 1.0
+      outer_iterations: 500
+      primal_iterations: 10
+      primal_optimizer: "adam"
+      primal_lr: 0.01
+  problem3:
+    problem_name: "primal_iterations_3"
+    train_batch_size: 10000
+    val_batch_size: 10000
+    evaluate_frequency: 20
+    verbose_evals: True
+    metrics:
+      - "forward_pass_count"
+      - "validation_loss"
+      - "consensus_error"
+      - "mesh_grid_density"
+      - "current_epoch"
+    optimizer_config:
+      alg_name: "cadmm"
+      rho_init: 0.1
+      rho_scaling: 1.0
+      outer_iterations: 500
+      primal_iterations: 10
       primal_optimizer: "adam"
       primal_lr: 0.01
