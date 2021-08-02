@@ -79,7 +79,8 @@ def train_solo(model, loss, train_set, val_set, device, conf):
         xlocs = X[::8, ::8].reshape(-1, 1)
         ylocs = Y[::8, ::8].reshape(-1, 1)
         mesh_poses = np.hstack((xlocs, ylocs))
-        mesh_inputs = torch.Tensor(mesh_poses, device=device)
+        mesh_inputs = torch.Tensor(mesh_poses)
+        mesh_inputs = mesh_inputs.to(device)
 
         mesh_dense = model.forward(mesh_inputs)
 
