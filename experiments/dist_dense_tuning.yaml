@@ -1,5 +1,5 @@
 experiment:
-  name: "dist_dense_tuning2"
+  name: "dist_dense_tuning3"
   output_metadir: "../results/"
   writeout: true
   use_cuda: true
@@ -31,7 +31,7 @@ experiment:
     verbose: True
 problem_configs:
   problem1:
-    problem_name: "batchsize_2k"
+    problem_name: "rho_1"
     train_batch_size: 2000
     val_batch_size: 10000
     evaluate_frequency: 20
@@ -51,7 +51,7 @@ problem_configs:
       primal_optimizer: "adam"
       primal_lr: 0.01
   problem2:
-    problem_name: "batchsize_6k"
+    problem_name: "rho_05"
     train_batch_size: 2000
     val_batch_size: 10000
     evaluate_frequency: 20
@@ -64,15 +64,15 @@ problem_configs:
       - "current_epoch"
     optimizer_config:
       alg_name: "cadmm"
-      rho_init: 1.0
+      rho_init: 0.5
       rho_scaling: 1.0
       outer_iterations: 500
-      primal_iterations: 10
+      primal_iterations: 5
       primal_optimizer: "adam"
       primal_lr: 0.01
   problem3:
-    problem_name: "batchsize_12k"
-    train_batch_size: 12000
+    problem_name: "rho_01"
+    train_batch_size: 2000
     val_batch_size: 10000
     evaluate_frequency: 20
     verbose_evals: True
@@ -84,9 +84,9 @@ problem_configs:
       - "current_epoch"
     optimizer_config:
       alg_name: "cadmm"
-      rho_init: 1.0
+      rho_init: 0.1
       rho_scaling: 1.0
       outer_iterations: 500
-      primal_iterations: 10
+      primal_iterations: 5
       primal_optimizer: "adam"
       primal_lr: 0.01
