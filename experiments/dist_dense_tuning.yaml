@@ -31,8 +31,8 @@ experiment:
     verbose: True
 problem_configs:
   problem1:
-    problem_name: "primal_iterations_5"
-    train_batch_size: 10000
+    problem_name: "batchsize_2k"
+    train_batch_size: 2000
     val_batch_size: 10000
     evaluate_frequency: 20
     verbose_evals: True
@@ -44,15 +44,15 @@ problem_configs:
       - "current_epoch"
     optimizer_config:
       alg_name: "cadmm"
-      rho_init: 0.1
+      rho_init: 1.0
       rho_scaling: 1.0
       outer_iterations: 500
       primal_iterations: 5
       primal_optimizer: "adam"
       primal_lr: 0.01
   problem2:
-    problem_name: "primal_iterations_10"
-    train_batch_size: 10000
+    problem_name: "batchsize_6k"
+    train_batch_size: 2000
     val_batch_size: 10000
     evaluate_frequency: 20
     verbose_evals: True
@@ -64,15 +64,15 @@ problem_configs:
       - "current_epoch"
     optimizer_config:
       alg_name: "cadmm"
-      rho_init: 0.1
+      rho_init: 1.0
       rho_scaling: 1.0
       outer_iterations: 500
       primal_iterations: 10
       primal_optimizer: "adam"
       primal_lr: 0.01
   problem3:
-    problem_name: "primal_iterations_3"
-    train_batch_size: 10000
+    problem_name: "batchsize_12k"
+    train_batch_size: 12000
     val_batch_size: 10000
     evaluate_frequency: 20
     verbose_evals: True
@@ -84,7 +84,7 @@ problem_configs:
       - "current_epoch"
     optimizer_config:
       alg_name: "cadmm"
-      rho_init: 0.1
+      rho_init: 1.0
       rho_scaling: 1.0
       outer_iterations: 500
       primal_iterations: 10

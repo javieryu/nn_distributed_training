@@ -84,7 +84,11 @@ def train_solo(model, loss, train_set, val_set, device, conf):
 
         mesh_dense = model.forward(mesh_inputs)
 
-    return {"validation_loss": vloss, "mesh_grid_density": mesh_dense}
+    return {
+        "validation_loss": vloss,
+        "mesh_grid_density": mesh_dense,
+        "mesh_grid": mesh_inputs,
+    }
 
 
 def experiment(yaml_pth):
