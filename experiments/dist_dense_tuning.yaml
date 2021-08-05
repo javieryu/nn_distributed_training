@@ -1,5 +1,5 @@
 experiment:
-  name: "dist_dense_tuning3"
+  name: "dist_dense_tuning4"
   output_metadir: "../results/"
   writeout: true
   use_cuda: true
@@ -32,7 +32,7 @@ experiment:
 problem_configs:
   problem1:
     problem_name: "rho_1"
-    train_batch_size: 2000
+    train_batch_size: 4000
     val_batch_size: 10000
     evaluate_frequency: 20
     verbose_evals: True
@@ -46,13 +46,13 @@ problem_configs:
       alg_name: "cadmm"
       rho_init: 1.0
       rho_scaling: 1.0
-      outer_iterations: 500
+      outer_iterations: 750
       primal_iterations: 5
       primal_optimizer: "adam"
-      primal_lr: 0.01
+      primal_lr: 0.05
   problem2:
     problem_name: "rho_05"
-    train_batch_size: 2000
+    train_batch_size: 4000
     val_batch_size: 10000
     evaluate_frequency: 20
     verbose_evals: True
@@ -64,15 +64,15 @@ problem_configs:
       - "current_epoch"
     optimizer_config:
       alg_name: "cadmm"
-      rho_init: 0.5
+      rho_init: 1.0
       rho_scaling: 1.0
-      outer_iterations: 500
+      outer_iterations: 750
       primal_iterations: 5
       primal_optimizer: "adam"
-      primal_lr: 0.01
+      primal_lr: 0.005
   problem3:
     problem_name: "rho_01"
-    train_batch_size: 2000
+    train_batch_size: 4000
     val_batch_size: 10000
     evaluate_frequency: 20
     verbose_evals: True
@@ -84,9 +84,9 @@ problem_configs:
       - "current_epoch"
     optimizer_config:
       alg_name: "cadmm"
-      rho_init: 0.1
+      rho_init: 1.0
       rho_scaling: 1.0
-      outer_iterations: 500
+      outer_iterations: 750
       primal_iterations: 5
       primal_optimizer: "adam"
-      primal_lr: 0.01
+      primal_lr: 0.001
