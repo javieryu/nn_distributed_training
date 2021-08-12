@@ -12,6 +12,7 @@ class DistDensityProblem:
         base_loss,
         train_sets,
         val_set,
+        device,
         conf,
     ):
         self.graph = graph
@@ -59,6 +60,15 @@ class DistDensityProblem:
             # For reconstruction during visualization
             self.metrics["mesh_inputs"] = self.mesh_inputs
 
+        # Device check for GPU
+        self.device = device
+
+        # send all of the models to the GPU
+        for i in range(self.N):
+            self.models[i] = self.models[i].to(self.device)
+
+        self.mesh_inputs = self.mesh_inputs.to(self.device)
+
     def local_batch_loss(self, i):
         """Forward pass on a batch data for model at node i,
         and if it's node_id = 0 then increment a metric that
@@ -90,9 +100,9 @@ class DistDensityProblem:
             # this for node 0, and it will be consistent with all nodes.
             self.forward_cnt += self.conf["train_batch_size"]
 
-        yh = self.models[i].forward(batch["position"])
+        yh = self.models[i].forward(batch["position"].to(self.device))
 
-        return self.base_loss(yh, batch["density"])
+        return self.base_loss(yh, batch["density"].to(self.device))
 
     def save_metrics(self, output_dir):
         """Save current metrics lists to a PT file."""
@@ -110,8 +120,10 @@ class DistDensityProblem:
         val_loss = 0.0
         for batch in self.val_loader:
             with torch.no_grad():
-                yh = self.models[i].forward(batch["position"])
-                val_loss += self.base_loss(yh, batch["density"]).data.detach()
+                yh = self.models[i].forward(batch["position"].to(self.device))
+                val_loss += self.base_loss(
+                    yh, batch["density"].to(self.device)
+                ).data.detach()
         return val_loss
 
     def mesh_grid_density(self, i):

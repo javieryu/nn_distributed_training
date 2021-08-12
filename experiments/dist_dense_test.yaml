@@ -2,9 +2,10 @@ experiment:
   name: "dist_dense_template"
   output_metadir: "../results/"
   writeout: true
+  use_cuda: true
   data:
     data_dir: "../floorplans/32_data/"
-    split_type: "trajectory"
+    split_type: "random"
     num_beams: 20
     beam_samps: 20
     scan_dist_scale: 0.2
@@ -13,7 +14,7 @@ experiment:
     num_validation_scans: 500 
   loss: "BCE"
   graph:
-    num_nodes: 6
+    num_nodes: 3
     type: "wheel"
     p: 0.6
     gen_attempts: 10
@@ -23,7 +24,7 @@ experiment:
 problem_configs:
   problem1:
     problem_name: "vanilla_cadmm"
-    train_batch_size: 5000
+    train_batch_size: 10000
     val_batch_size: 10000
     evaluate_frequency: 20
     verbose_evals: True
@@ -35,9 +36,9 @@ problem_configs:
       - "current_epoch"
     optimizer_config:
       alg_name: "cadmm"
-      rho_init: 0.5
+      rho_init: 0.1
       rho_scaling: 1.0
-      outer_iterations: 1500
+      outer_iterations: 30
       primal_iterations: 5
       primal_optimizer: "adam"
-      primal_lr: 0.005
+      primal_lr: 0.01

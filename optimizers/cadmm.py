@@ -2,11 +2,14 @@ import torch
 
 
 class CADMM:
-    def __init__(self, ddl_problem, conf):
+    def __init__(self, ddl_problem, device, conf):
         self.pr = ddl_problem
         self.conf = conf
 
-        self.duals = {i: torch.zeros(self.pr.n) for i in range(self.pr.N)}
+        self.duals = {
+            i: torch.zeros((self.pr.n), device=device)
+            for i in range(self.pr.N)
+        }
 
         self.rho = self.conf["rho_init"]
         self.rho_scaling = self.conf["rho_scaling"]

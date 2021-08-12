@@ -2,10 +2,10 @@ experiment:
   name: "dist_dense_template"
   output_metadir: "../results/"
   writeout: true
-  use_cuda: true
+  use_cuda: false
   data:
     data_dir: "../floorplans/32_data/"
-    split_type: "trajectory"
+    split_type: "random"
     num_beams: 20
     beam_samps: 20
     scan_dist_scale: 0.2
@@ -36,9 +36,9 @@ problem_configs:
       - "current_epoch"
     optimizer_config:
       alg_name: "cadmm"
-      rho_init: 1.0
+      rho_init: 0.1
       rho_scaling: 1.0
       outer_iterations: 30
       primal_iterations: 5
       primal_optimizer: "adam"
-      primal_lr: 0.005
+      primal_lr: 0.01
