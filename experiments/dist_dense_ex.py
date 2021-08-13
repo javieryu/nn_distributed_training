@@ -254,7 +254,23 @@ def experiment(yaml_pth):
         print("-------------------------------------------------------")
         print("-------------------------------------------------------")
         print("Running problem: " + prob_conf["problem_name"])
-        dopt.train()
+        if opt_conf["profile"]:
+            with torch.profiler.profile(
+                schedule=torch.profiler.schedule(
+                    wait=1, warmup=1, active=3, repeat=3
+                ),
+                on_trace_ready=torch.profiler.tensorboard_trace_handler(
+                    os.path.join(
+                        output_dir, prob_conf["problem_name"] + "opt_profile"
+                    )
+                ),
+                record_shapes=True,
+                with_stack=True,
+            ) as prof:
+                dopt.train(profiler=prof)
+        else:
+            dopt.train()
+
         if exp_conf["writeout"]:
             prob.save_metrics(output_dir)
 

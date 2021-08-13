@@ -53,7 +53,7 @@ class CADMM:
 
         return
 
-    def train(self):
+    def train(self, profiler=None):
         eval_every = self.pr.conf["evaluate_frequency"]
         oits = self.conf["outer_iterations"]
         for k in range(oits):
@@ -80,5 +80,8 @@ class CADMM:
                 self.duals[i] += self.rho * torch.sum(ths[i] - thj, dim=0)
                 th_reg = (thj + ths[i]) / 2.0
                 self.primal_update(i, th_reg)
+
+            if profiler is not None:
+                profiler.step()
 
         return
