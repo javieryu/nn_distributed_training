@@ -70,3 +70,4 @@ problem_configs:
       primal_iterations: 5
       primal_optimizer: "adam"
       primal_lr: 0.001
+      profile: false
