@@ -37,6 +37,7 @@ class DistDensityProblem:
                 self.train_sets[i],
                 batch_size=self.conf["train_batch_size"],
                 shuffle=True,
+                num_workers=4,
             )
 
             self.train_iters[i] = iter(self.train_loaders[i])
