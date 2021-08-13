@@ -125,15 +125,19 @@ class RandomPoseLidarDataset(torch.utils.data.Dataset):
         if round_density:
             self.scans[:, 2] = np.rint(self.scans[:, 2])
 
+        self.tds = torch.utils.data.TensorDataset(
+            self.scans[:, :2], self.scans[:, 2]
+        )
+
     def __getitem__(self, idx):
-        meta_dict = {
-            "density": self.scans[idx, 2].reshape(1, -1),
-            "position": self.scans[idx, :2].reshape(1, -1),
-        }
-        return meta_dict
+        # meta_dict = {
+        #    "density": self.scans[idx, 2].reshape(1, -1),
+        #    "position": self.scans[idx, :2].reshape(1, -1),
+        # }
+        return self.tds[idx]
 
     def __len__(self):
-        return self.scans.shape[0]
+        return len(self.tds)
 
 
 class TrajectoryLidarDataset(torch.utils.data.Dataset):
@@ -164,6 +168,10 @@ class TrajectoryLidarDataset(torch.utils.data.Dataset):
         if round_density:
             self.scans[:, 2] = np.rint(self.scans[:, 2])
 
+        self.tds = torch.utils.data.TensorDataset(
+            self.scans[:, :2], self.scans[:, 2]
+        )
+
     def __img2lidar__(self, img_idx):
         return np.array([self.lidar.nx, self.lidar.ny]) * (
             (
@@ -173,11 +181,11 @@ class TrajectoryLidarDataset(torch.utils.data.Dataset):
         )
 
     def __getitem__(self, idx):
-        meta_dict = {
-            "density": self.scans[idx, 2].reshape(1, -1),
-            "position": self.scans[idx, :2].reshape(1, -1),
-        }
-        return meta_dict
+        # meta_dict = {
+        #    "density": self.scans[idx, 2].reshape(1, -1),
+        #    "position": self.scans[idx, :2].reshape(1, -1),
+        # }
+        return self.tds[idx]
 
     def __len__(self):
-        return self.scans.shape[0]
+        return len(self.tds)
