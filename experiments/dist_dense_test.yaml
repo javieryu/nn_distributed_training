@@ -19,7 +19,7 @@ experiment:
     p: 0.6
     gen_attempts: 10
   model:
-    shape: [2, 86, 32, 32, 32, 1]
+    shape: [2, 10, 10, 10, 10, 1]
     scale: 0.05
   individual_training:
     train_solo: False
@@ -32,8 +32,8 @@ experiment:
 problem_configs:
   problem1:
     problem_name: "vanilla_cadmm"
-    train_batch_size: 10000
-    val_batch_size: 10000
+    train_batch_size: 1000
+    val_batch_size: 1000
     evaluate_frequency: 20
     verbose_evals: True
     metrics:
@@ -47,7 +47,7 @@ problem_configs:
       rho_init: 0.1
       rho_scaling: 1.0
       outer_iterations: 30
-      primal_iterations: 5
+      primal_iterations: 1
       primal_optimizer: "adam"
       primal_lr: 0.0001
       profile: True
