@@ -2,6 +2,7 @@ import torch
 import copy
 import os
 import numpy as np
+from torch._C import device
 
 
 class DistDensityProblem:
@@ -89,11 +90,11 @@ class DistDensityProblem:
             local data.
         """
         try:
-            batch = next(self.train_iters[i])
+            locs, dens = next(self.train_iters[i])
         except StopIteration:
             self.epoch_tracker[i] += 1
             self.train_iters[i] = iter(self.train_loaders[i])
-            batch = next(self.train_iters[i])
+            locs, dens = next(self.train_iters[i])
 
         if i == 0:
             # Count the number of forward passes that have been performed
@@ -101,9 +102,9 @@ class DistDensityProblem:
             # this for node 0, and it will be consistent with all nodes.
             self.forward_cnt += self.conf["train_batch_size"]
 
-        yh = self.models[i].forward(batch["position"].to(self.device))
+        yh = self.models[i].forward(locs.to(self.device))
 
-        return self.base_loss(yh, batch["density"].to(self.device))
+        return self.base_loss(torch.squeeze(yh), dens.to(self.device))
 
     def save_metrics(self, output_dir):
         """Save current metrics lists to a PT file."""
@@ -121,9 +122,10 @@ class DistDensityProblem:
         val_loss = 0.0
         for batch in self.val_loader:
             with torch.no_grad():
-                yh = self.models[i].forward(batch["position"].to(self.device))
+                locs, dens = batch[0].to(self.device), batch[1].to(self.device)
+                yh = self.models[i].forward(locs)
                 val_loss += self.base_loss(
-                    yh, batch["density"].to(self.device)
+                    torch.squeeze(yh), dens
                 ).data.detach()
         return val_loss
 
