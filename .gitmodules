@@ -1,0 +1,3 @@
+[submodule "torch_interpolations"]
+	path = torch_interpolations
+	url = git@github.com:sbarratt/torch_interpolations.git
