@@ -7,9 +7,11 @@ class DSGD:
     def __init__(self, ddl_problem, device, conf):
         self.pr = ddl_problem
         self.conf = conf
+        self.device = device
 
         # Compute consensus weight matrix
         self.W = graph_generation.get_metropolis(ddl_problem.graph)
+        self.W = self.W.to(self.device)
 
         # Get list of all model parameter pointers
         self.plists = {
@@ -29,7 +31,7 @@ class DSGD:
             if k % eval_every == 0 or k == oits - 1:
                 self.pr.evaluate_metrics()
 
-            alph = self.alph0 / math.sqrt(k + 1)
+            alph = self.alph0  # / math.sqrt(k + 1)
 
             # Iterate over the agents for communication step
             for i in range(self.pr.N):
@@ -54,8 +56,8 @@ class DSGD:
                 # Locally update model with gradient
                 with torch.no_grad():
                     for p in range(self.num_params):
-                        self.plists[i][p].add_(alph * self.plists[i][p].grad)
-                        self.plists[i][p].zero_()
+                        self.plists[i][p].add_(-alph * self.plists[i][p].grad)
+                        self.plists[i][p].grad.zero_()
 
             if profiler is not None:
                 profiler.step()

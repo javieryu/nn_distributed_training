@@ -1,6 +1,4 @@
-import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 
 class MNISTConvNet(nn.Module):
@@ -10,20 +8,21 @@ class MNISTConvNet(nn.Module):
     """
 
     def __init__(self, num_filters, kernel_size, linear_width):
-        super(MNISTConvNet, self).__init__()
-        self.conv = nn.Conv2d(1, num_filters, kernel_size, 1)
+        super().__init__()
         conv_out_width = 28 - (kernel_size - 1)
         pool_out_width = int(conv_out_width / 2)
-        self.fc1 = nn.Linear(num_filters * (pool_out_width ** 2), linear_width)
-        self.fc2 = nn.Linear(linear_width, 10)
+        fc1_indim = num_filters * (pool_out_width ** 2)
+
+        self.seq = nn.Sequential(
+            nn.Conv2d(1, num_filters, kernel_size, 1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2),
+            nn.Flatten(),
+            nn.Linear(fc1_indim, linear_width),
+            nn.ReLU(inplace=True),
+            nn.Linear(linear_width, 10),
+            nn.LogSoftmax(dim=1),
+        )
 
     def forward(self, x):
-        x = self.conv(x)
-        x = F.relu(x)
-        x = F.max_pool2d(x, 2)
-        x = torch.flatten(x, 1)
-        x = self.fc1(x)
-        x = F.relu(x)
-        x = self.fc2(x)
-        x = F.log_softmax(x, dim=1)
-        return x
+        return self.seq(x)

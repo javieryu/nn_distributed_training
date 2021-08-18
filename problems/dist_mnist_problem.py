@@ -19,6 +19,7 @@ class DistMNISTProblem:
         base_loss,
         train_sets,
         val_set,
+        device,
         conf,
     ):
         self.graph = graph
@@ -33,8 +34,12 @@ class DistMNISTProblem:
             base_model.parameters()
         ).shape[0]
 
+        self.device = device
+
         # Copy the base_model for each node
         self.models = {i: copy.deepcopy(base_model) for i in range(self.N)}
+        for i in range(self.N):
+            self.models[i] = self.models[i].to(self.device)
 
         # Create train loaders and iterators with specified batch size
         self.train_loaders = {}
@@ -88,9 +93,9 @@ class DistMNISTProblem:
             # this for node 0, and it will be consistent with all nodes.
             self.forward_cnt += self.conf["train_batch_size"]
 
-        yh = self.models[i].forward(x)
+        yh = self.models[i].forward(x.to(self.device))
 
-        return self.base_loss(yh, y)
+        return self.base_loss(yh, y.to(self.device))
 
     def save_metrics(self, output_dir):
         """Save current metrics lists to a PT file."""
@@ -110,6 +115,7 @@ class DistMNISTProblem:
             loss = 0.0
             correct = 0
             for x, y in self.val_loader:
+                x, y = x.to(self.device), y.to(self.device)
                 yh = self.models[i].forward(x)
                 loss += self.base_loss(yh, y).item()
                 pred = yh.argmax(dim=1, keepdim=True)

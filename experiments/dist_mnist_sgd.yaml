@@ -1,7 +1,7 @@
 experiment:
-  name: "dist_cnn_cadmm_scaled_v_const"
+  name: "dist_mnist_sgd_cadmm"
   data_dir: "../data/"
-  output_metadir: "./outputs/"
+  output_metadir: "../results/"
   use_cuda: true
   writeout: false
   data_split_type: "hetero"
@@ -19,13 +19,30 @@ experiment:
     train_solo: false
     optimizer: "adam"
     lr: 0.005
-    epochs: 6
+    epochs: 3
     train_batch_size: 100
     val_batch_size: 100
     verbose: true
 problem_configs:
   problem1:
-    problem_name: "vanilla_cadmm"
+    problem_name: "sgd"
+    train_batch_size: 64
+    val_batch_size: 128
+    evaluate_frequency: 20
+    verbose_evals: true
+    metrics:
+      - "forward_pass_count"
+      - "validation_loss"
+      - "consensus_error"
+      - "top1_accuracy"
+      - "current_epoch"
+    optimizer_config:
+      alg_name: "dsgd"
+      alpha0: 0.01
+      outer_iterations: 750
+      profile: false
+  problem2:
+    problem_name: "cadmm"
     train_batch_size: 64
     val_batch_size: 128
     evaluate_frequency: 20
@@ -40,8 +57,8 @@ problem_configs:
       alg_name: "cadmm"
       rho_init: 1.0
       rho_scaling: 1.0
-      outer_iterations: 30
-      primal_iterations: 5
+      outer_iterations: 750
+      primal_iterations: 3
       primal_optimizer: "adam"
       primal_lr: 0.005
       profile: false

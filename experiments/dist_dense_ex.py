@@ -10,16 +10,11 @@ import torch
 import networkx as nx
 import numpy as np
 
-sys.path.insert(0, "../models/")
-sys.path.insert(0, "../problems/")
-sys.path.insert(0, "../optimizers/")
-sys.path.insert(0, "../utils/")
-sys.path.insert(0, "../floorplans/lidar")
-from fourier_nn import FourierNet
-from dist_dense_problem import DistDensityProblem
-from cadmm import CADMM
-import graph_generation
-from lidar import (
+from models.fourier_nn import FourierNet
+from problems.dist_dense_problem import DistDensityProblem
+from optimizers.cadmm import CADMM
+from utils import graph_generation
+from floorplans.lidar.lidar import (
     RandomPoseLidarDataset,
     TrajectoryLidarDataset,
 )
@@ -64,16 +59,16 @@ def train_solo(model, loss, train_set, val_set, device, conf):
     for _ in range(conf["epochs"]):
         for batch in trainloader:
             opt.zero_grad()
-            pd = model.forward(batch["position"].to(device))
-            l = loss(pd, batch["density"].to(device))
+            pd = model.forward(batch[0].to(device))
+            l = loss(pd, batch[1].to(device))
             l.backward()
             opt.step()
 
     with torch.no_grad():
         vloss = 0.0
         for batch in valloader:
-            pd = model.forward(batch["position"].to(device))
-            vloss += loss(pd, batch["density"].to(device)).data.detach()
+            pd = model.forward(batch[0].to(device))
+            vloss += loss(pd, batch[1].to(device)).data.detach()
 
         X, Y = np.meshgrid(val_set.lidar.xs, val_set.lidar.ys)
         xlocs = X[::8, ::8].reshape(-1, 1)
