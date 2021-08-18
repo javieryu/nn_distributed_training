@@ -3,7 +3,7 @@ experiment:
   data_dir: "../data/"
   output_metadir: "../results/"
   use_cuda: true
-  writeout: false
+  writeout: true
   data_split_type: "hetero"
   loss: "NLL"
   graph:
@@ -16,10 +16,10 @@ experiment:
     kernel_size: 5
     linear_width: 64
   individual_training:
-    train_solo: false
+    train_solo: true
     optimizer: "adam"
     lr: 0.005
-    epochs: 3
+    epochs: 6
     train_batch_size: 100
     val_batch_size: 100
     verbose: true
