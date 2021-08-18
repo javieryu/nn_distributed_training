@@ -13,6 +13,7 @@ from models.mnist_conv_nn import MNISTConvNet
 from problems.dist_mnist_problem import DistMNISTProblem
 from optimizers.cadmm import CADMM
 from optimizers.dsgd import DSGD
+from optimizers.dsgt import DSGT
 from utils import graph_generation
 
 torch.set_default_tensor_type(torch.DoubleTensor)
@@ -195,6 +196,8 @@ def experiment(yaml_pth):
             dopt = CADMM(prob, device, opt_conf)
         elif opt_conf["alg_name"] == "dsgd":
             dopt = DSGD(prob, device, opt_conf)
+        elif opt_conf["alg_name"] == "dsgt":
+            dopt = DSGT(prob, device, opt_conf)
         else:
             raise NameError("Unknown distributed opt algorithm.")
 

@@ -3,7 +3,7 @@ experiment:
   data_dir: "../data/"
   output_metadir: "../results/"
   use_cuda: true
-  writeout: true
+  writeout: false
   data_split_type: "hetero"
   loss: "NLL"
   graph:
@@ -16,7 +16,7 @@ experiment:
     kernel_size: 5
     linear_width: 64
   individual_training:
-    train_solo: true
+    train_solo: false
     optimizer: "adam"
     lr: 0.005
     epochs: 6
@@ -25,7 +25,7 @@ experiment:
     verbose: true
 problem_configs:
   problem1:
-    problem_name: "sgd"
+    problem_name: "dsgt"
     train_batch_size: 64
     val_batch_size: 128
     evaluate_frequency: 20
@@ -37,8 +37,8 @@ problem_configs:
       - "top1_accuracy"
       - "current_epoch"
     optimizer_config:
-      alg_name: "dsgd"
-      alpha0: 0.01
+      alg_name: "dsgt"
+      alpha: 0.05
       outer_iterations: 750
       profile: false
   problem2:
