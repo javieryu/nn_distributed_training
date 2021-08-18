@@ -49,8 +49,8 @@ def train_solo(model, loss, train_set, val_set, device, conf):
         val_loss = 0.0
         correct = 0
         for data, labels in valloader:
-            out = model.forward(data)
-            val_loss += loss(out, labels).item()
+            out = model.forward(data.to(device))
+            val_loss += loss(out, labels.to(device)).item()
             pred = out.argmax(dim=1, keepdim=True)
             correct += pred.eq(labels.view_as(pred)).sum().item()
 
