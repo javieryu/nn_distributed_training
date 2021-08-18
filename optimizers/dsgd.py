@@ -21,17 +21,19 @@ class DSGD:
         # Useful numbers
         self.num_params = len(self.plists[0])
         self.alph0 = conf["alpha0"]
+        self.mu = conf["mu"]
 
     def train(self, profiler=None):
         eval_every = self.pr.conf["evaluate_frequency"]
         oits = self.conf["outer_iterations"]
 
         # Optimization loop
+        alph = self.alph0
         for k in range(oits):
             if k % eval_every == 0 or k == oits - 1:
                 self.pr.evaluate_metrics()
 
-            alph = self.alph0  # / math.sqrt(k + 1)
+            alph = alph * (1 - self.mu * alph)
 
             # Iterate over the agents for communication step
             for i in range(self.pr.N):
