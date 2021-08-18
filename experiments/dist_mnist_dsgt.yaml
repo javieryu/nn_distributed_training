@@ -1,5 +1,5 @@
 experiment:
-  name: "dist_mnist_sgd_cadmm"
+  name: "dist_mnist_dsgt_dsgd_cadmm"
   data_dir: "../data/"
   output_metadir: "../results/"
   use_cuda: true
@@ -38,7 +38,7 @@ problem_configs:
       - "current_epoch"
     optimizer_config:
       alg_name: "dsgt"
-      alpha: 0.03
+      alpha: 0.05
       outer_iterations: 750
       profile: false
   problem2:
@@ -61,4 +61,21 @@ problem_configs:
       primal_iterations: 3
       primal_optimizer: "adam"
       primal_lr: 0.005
+      profile: false
+  problem3:
+    problem_name: "dsgd"
+    train_batch_size: 64
+    val_batch_size: 128
+    evaluate_frequency: 20
+    verbose_evals: true
+    metrics:
+      - "forward_pass_count"
+      - "validation_loss"
+      - "consensus_error"
+      - "top1_accuracy"
+      - "current_epoch"
+    optimizer_config:
+      alg_name: "dsgd"
+      alpha0: 0.005
+      outer_iterations: 750
       profile: false
