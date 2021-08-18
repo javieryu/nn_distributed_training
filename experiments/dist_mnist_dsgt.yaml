@@ -7,7 +7,7 @@ experiment:
   data_split_type: "hetero"
   loss: "NLL"
   graph:
-    num_nodes: 10
+    num_nodes: 5
     type: "wheel"
     p: 0.6
     gen_attempts: 10
@@ -38,7 +38,7 @@ problem_configs:
       - "current_epoch"
     optimizer_config:
       alg_name: "dsgt"
-      alpha: 0.02
+      alpha: 0.03
       outer_iterations: 750
       profile: false
   problem2:
