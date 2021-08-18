@@ -16,7 +16,7 @@ experiment:
     kernel_size: 5
     linear_width: 64
   individual_training:
-    train_solo: true
+    train_solo: false
     optimizer: "adam"
     lr: 0.005
     epochs: 6
@@ -38,7 +38,7 @@ problem_configs:
       - "current_epoch"
     optimizer_config:
       alg_name: "dsgt"
-      alpha: 0.01
+      alpha: 0.02
       outer_iterations: 750
       profile: false
   problem2:
