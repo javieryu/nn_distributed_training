@@ -38,7 +38,7 @@ problem_configs:
       - "current_epoch"
     optimizer_config:
       alg_name: "dsgt"
-      alpha: 0.05
+      alpha: 0.01
       outer_iterations: 750
       profile: false
   problem2:
