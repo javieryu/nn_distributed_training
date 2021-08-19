@@ -46,7 +46,7 @@ problem_configs:
       primal_lr: 0.005
       profile: false
   problem2:
-    problem_name: "dsgt"
+    problem_name: "dsgt_01"
     train_batch_size: 64
     val_batch_size: 128
     evaluate_frequency: 20
@@ -63,7 +63,7 @@ problem_configs:
       outer_iterations: 750
       profile: false
    problem3:
-    problem_name: "dsgt"
+    problem_name: "dsgt_005"
     train_batch_size: 64
     val_batch_size: 128
     evaluate_frequency: 20
