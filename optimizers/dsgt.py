@@ -70,6 +70,7 @@ class DSGT:
                 bloss = self.pr.local_batch_loss(i)
                 bloss.backward()
 
+                neighs = list(self.pr.graph.neighbors(i))
                 # Locally update model with gradient
                 with torch.no_grad():
                     for p in range(self.num_params):

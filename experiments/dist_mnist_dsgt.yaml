@@ -76,7 +76,7 @@ problem_configs:
       - "current_epoch"
     optimizer_config:
       alg_name: "dsgd"
-      alpha0: 0.05
-      mu: 0.01
-      outer_iterations: 750
+      alpha0: 0.01
+      mu: 0.001
+      outer_iterations: 1000
       profile: false
