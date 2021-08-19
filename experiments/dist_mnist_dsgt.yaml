@@ -62,7 +62,7 @@ problem_configs:
       alpha: 0.01
       outer_iterations: 750
       profile: false
-   problem3:
+  problem3:
     problem_name: "dsgt_005"
     train_batch_size: 64
     val_batch_size: 128
