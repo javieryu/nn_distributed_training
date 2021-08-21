@@ -81,6 +81,6 @@ problem_configs:
     optimizer_config:
       alg_name: "dsgt"
       alpha: 0.005
-      outer_iterations: 750
+      outer_iterations: 1400
       profile: false
  
