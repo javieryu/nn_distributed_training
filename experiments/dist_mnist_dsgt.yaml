@@ -25,7 +25,7 @@ experiment:
     verbose: true
 problem_configs:
   problem1:
-    problem_name: "cadmm"
+    problem_name: "cadmm_i5"
     train_batch_size: 64
     val_batch_size: 128
     evaluate_frequency: 20
@@ -40,13 +40,13 @@ problem_configs:
       alg_name: "cadmm"
       rho_init: 1.0
       rho_scaling: 1.0
-      outer_iterations: 750
-      primal_iterations: 3
+      outer_iterations: 1400
+      primal_iterations: 5
       primal_optimizer: "adam"
       primal_lr: 0.005
       profile: false
   problem2:
-    problem_name: "dsgt_01"
+    problem_name: "cadmm_r5"
     train_batch_size: 64
     val_batch_size: 128
     evaluate_frequency: 20
@@ -58,9 +58,13 @@ problem_configs:
       - "top1_accuracy"
       - "current_epoch"
     optimizer_config:
-      alg_name: "dsgt"
-      alpha: 0.01
-      outer_iterations: 750
+      alg_name: "cadmm"
+      rho_init: 5.0
+      rho_scaling: 1.0
+      outer_iterations: 1400
+      primal_iterations: 3
+      primal_optimizer: "adam"
+      primal_lr: 0.005
       profile: false
   problem3:
     problem_name: "dsgt_005"
