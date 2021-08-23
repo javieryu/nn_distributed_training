@@ -1,8 +1,9 @@
 import networkx as nx
+import torch
 
 
 def generate_from_conf(graph_conf):
-    """ Generates a graph given a specified configuration.
+    """Generates a graph given a specified configuration.
 
     Args:
         graph_conf (dict): dictionary containing parameters used
@@ -33,3 +34,21 @@ def generate_from_conf(graph_conf):
         raise NameError("Unknown communication graph type.")
 
     return N, graph
+
+
+def get_metropolis(graph):
+    N = graph.number_of_nodes()
+    W = torch.zeros((N, N))
+
+    L = nx.laplacian_matrix(graph)
+    degs = [L[i, i] for i in range(N)]
+
+    for i in range(N):
+        for j in range(N):
+            if graph.has_edge(i, j) and i != j:
+                W[i, j] = 1.0 / (max(degs[i], degs[j]) + 1.0)
+
+    for i in range(N):
+        W[i, i] = 1.0 - torch.sum(W[i, :])
+
+    return W

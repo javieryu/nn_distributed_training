@@ -2,7 +2,8 @@ experiment:
   name: "dist_cnn_cadmm_scaled_v_const"
   data_dir: "../data/"
   output_metadir: "./outputs/"
-  writeout: true
+  use_cuda: true
+  writeout: false
   data_split_type: "hetero"
   loss: "NLL"
   graph:
@@ -14,13 +15,21 @@ experiment:
     num_filters: 3
     kernel_size: 5
     linear_width: 64
+  individual_training:
+    train_solo: false
+    optimizer: "adam"
+    lr: 0.005
+    epochs: 6
+    train_batch_size: 100
+    val_batch_size: 100
+    verbose: true
 problem_configs:
   problem1:
     problem_name: "vanilla_cadmm"
     train_batch_size: 64
     val_batch_size: 128
     evaluate_frequency: 20
-    verbose_evals: True
+    verbose_evals: true
     metrics:
       - "forward_pass_count"
       - "validation_loss"
@@ -35,23 +44,4 @@ problem_configs:
       primal_iterations: 5
       primal_optimizer: "adam"
       primal_lr: 0.005
-  problem2:
-    problem_name: "scaled_cadmm"
-    train_batch_size: 64
-    val_batch_size: 128
-    evaluate_frequency: 20
-    verbose_evals: True
-    metrics:
-      - "forward_pass_count"
-      - "validation_loss"
-      - "consensus_error"
-      - "top1_accuracy"
-      - "current_epoch"
-    optimizer_config:
-      alg_name: "cadmm"
-      rho_init: 1.e-3
-      rho_scaling: 1.02
-      outer_iterations: 30
-      primal_iterations: 5
-      primal_optimizer: "adam"
-      primal_lr: 0.005
+      profile: false
