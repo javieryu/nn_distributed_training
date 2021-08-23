@@ -9,7 +9,6 @@ import yaml
 import torch
 import networkx as nx
 import numpy as np
-from dsgt import DSGT
 
 from models.fourier_nn import FourierNet
 from problems.dist_dense_problem import DistDensityProblem
