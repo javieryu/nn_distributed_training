@@ -9,10 +9,12 @@ import yaml
 import torch
 import networkx as nx
 import numpy as np
+from dsgt import DSGT
 
 from models.fourier_nn import FourierNet
 from problems.dist_dense_problem import DistDensityProblem
 from optimizers.cadmm import CADMM
+from optimizers.dsgt import DSGT
 from utils import graph_generation
 from floorplans.lidar.lidar import (
     RandomPoseLidarDataset,
@@ -243,6 +245,8 @@ def experiment(yaml_pth):
 
         if opt_conf["alg_name"] == "cadmm":
             dopt = CADMM(prob, device, opt_conf)
+        elif opt_conf["alg_name"] == "dsgt":
+            dopt = DSGT(prob, device, opt_conf)
         else:
             raise NameError("Unknown distributed opt algorithm.")
 
