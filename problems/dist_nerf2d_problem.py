@@ -2,7 +2,8 @@ import torch
 import copy
 import os
 import numpy as np
-from torch._C import device
+
+import nerf2d.nerf2d_utils as nu
 
 
 class DistNeRF2DProblem:
