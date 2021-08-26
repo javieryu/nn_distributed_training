@@ -111,7 +111,7 @@ def main(args):
 				'n_updates_per_iteration': 10, # epochs
 				'lr': 3e-4, 
 				'clip': 0.2,
-				'render': True,
+				'render': False,
 				'render_every_i': 1
 			  }
 
