@@ -101,12 +101,11 @@ def rollout_marl(policy, env, render):
 			obs, rew, done, _ = env.last() # get agent observation 
 
 			if agent == "agent_0": # the prey
-				action = np.random.rand(5) if not done else None
-				# action = heuristic(env, obs)
+				# action = np.random.rand(5) if not done else None
+				action = heuristic(env, obs)
 				env.step(action)
 				
 			else: # predators
-				# print("PREDATOR")
 				t += 1 # Increment timesteps ran this batch so far
 
 				# Calculate action and make a step in the env.
