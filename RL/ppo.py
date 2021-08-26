@@ -157,17 +157,17 @@ class PPO:
 			# Save our model if it's time
 			if i_so_far % self.save_freq == 0:
 				# pendulum
-				# torch.save(self.actor.state_dict(), './ppo_actor_pend.pth')
-				# torch.save(self.critic.state_dict(), './ppo_critic_pend.pth')
+				# torch.save(self.actor.state_dict(), './trained/ppo_actor_pend.pth')
+				# torch.save(self.critic.state_dict(), './trained/ppo_critic_pend.pth')
 
 				# marl
 				# predator-prey
-				torch.save(self.actor.state_dict(), './ppo_actor_tag.pth')
-				torch.save(self.critic.state_dict(), './ppo_critic_tag.pth')
+				torch.save(self.actor.state_dict(), './trained/ppo_actor_tag.pth')
+				torch.save(self.critic.state_dict(), './trained/ppo_critic_tag.pth')
 
 				# save plotting data
-				np.save('avg_ep_rews.npy', np.asarray(avg_ep_rews))
-				np.save('timesteps.npy', np.asarray(timesteps))
+				np.save('./trained/avg_ep_rews.npy', np.asarray(avg_ep_rews))
+				np.save('./trained/timesteps.npy', np.asarray(timesteps))
 
 	def heuristic(self, obs):
 		"""
