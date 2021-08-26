@@ -10,7 +10,16 @@ class Lidar2D:
     A 2D queryable lidar scanner module.
     """
 
-    def __init__(self, img, num_beams, scan_dist_scale, beam_samps):
+    def __init__(
+        self,
+        img,
+        num_beams,
+        beam_length,
+        beam_samps,
+        samp_distribution_factor,
+        collision_samps,
+        fine_samps,
+    ):
         """Setting up the lidar scanner
 
         Args:
@@ -22,18 +31,21 @@ class Lidar2D:
             beam_samps (int): Number of samples along each beam. Tuning this parameter
              will effect whether thin walls are detected.
         """
-        self.beam_stop_thresh = 0.5
+        self.beam_stop_thresh = 0.6
 
         self.img = img
         self.num_beams = num_beams
         self.beam_samps = beam_samps
+        self.collision_samps = collision_samps
+        self.fine_samps = fine_samps
+        self.samp_df = samp_distribution_factor
 
         self.nx = self.img.shape[1]
         self.ny = self.img.shape[0]
-        self.beam_len = scan_dist_scale * max(self.nx, self.ny)
+        self.beam_len = beam_length
 
-        self.xs = self.nx * np.linspace(-0.5, 0.5, num=self.nx)
-        self.ys = self.ny * np.linspace(-0.5, 0.5, num=self.ny)
+        self.xs = np.linspace(-1, 1, num=self.nx)
+        self.ys = np.linspace(-1, 1, num=self.ny)
 
         self.density = interp.RectBivariateSpline(self.xs, self.ys, self.img.T)
 
@@ -63,23 +75,54 @@ class Lidar2D:
             beam_vec = self.beam_len * np.array(
                 [np.cos(angs[i]), np.sin(angs[i])]
             ).reshape(1, -1)
-            t = np.linspace(0.0, 1.0, num=self.beam_samps).reshape(-1, 1)
+            t = np.linspace(0.0, 1.0, num=self.collision_samps).reshape(-1, 1)
 
-            pnts = pos + t * np.repeat(beam_vec, self.beam_samps, axis=0)
-            scan_vals = self.density.ev(pnts[:, 0], pnts[:, 1]).reshape(-1, 1)
-            hit_ind = np.argmax(scan_vals >= self.beam_stop_thresh)
-
-            if hit_ind == 0:
-                slice_ind = scan_vals.shape[0]
-            else:
-                slice_ind = hit_ind + 1
-
-            beam_data.append(
-                np.concatenate(
-                    (pnts[:slice_ind, :], scan_vals[:slice_ind]), axis=1
-                )
+            coarse_pnts = pos + t * np.repeat(
+                beam_vec, self.collision_samps, axis=0
+            )
+            coarse_scan_vals = self.density.ev(
+                coarse_pnts[:, 0], coarse_pnts[:, 1]
+            ).reshape(-1, 1)
+            coarse_hit_ind = np.argmax(
+                coarse_scan_vals >= self.beam_stop_thresh
             )
 
+            if coarse_hit_ind == 0:
+                # No collision is detected, evenly sample across beam
+                t = np.linspace(0.0, 1.0, self.beam_samps).reshape(-1, 1)
+                pnts = pos + t * np.repeat(beam_vec, self.beam_samps, axis=0)
+            else:
+                # Collision detected by beam, fine sample to find a more accurate
+                # distance to the collision.
+                t = np.linspace(0.0, 1.0, self.fine_samps).reshape(-1, 1)
+                coarse_coll_pnt = coarse_pnts[coarse_hit_ind, :].reshape(1, 2)
+                last_empty = coarse_pnts[coarse_hit_ind - 1, :].reshape(1, 2)
+
+                fine_pnts = last_empty + t * np.repeat(
+                    (coarse_coll_pnt - last_empty),
+                    self.fine_samps,
+                    axis=0,
+                )
+                fine_scan_vals = self.density.ev(
+                    fine_pnts[:, 0], fine_pnts[:, 1]
+                ).reshape(-1, 1)
+                fine_hit_ind = np.argmax(
+                    fine_scan_vals >= self.beam_stop_thresh
+                )
+
+                collision_pnt = fine_pnts[fine_hit_ind, :].reshape(1, 2)
+
+                # weighted sample between collision point and pos to
+                # generate more data near walls.
+                t_weighted = np.power(
+                    np.linspace(0.0, 1.0, self.beam_samps), self.samp_df
+                ).reshape(-1, 1)
+                pnts = pos + t_weighted * np.repeat(
+                    collision_pnt - pos, self.beam_samps, axis=0
+                )
+
+            scan_vals = self.density.ev(pnts[:, 0], pnts[:, 1]).reshape(-1, 1)
+            beam_data.append(np.concatenate((pnts, scan_vals), axis=1))
         return np.vstack(beam_data)
 
 
@@ -88,14 +131,32 @@ class RandomPoseLidarDataset(torch.utils.data.Dataset):
         self,
         img_dir,
         num_beams,
-        scan_dist_scale,
+        beam_length,
         beam_samps,
+        samp_distribution_factor,
+        collision_samps,
+        fine_samps,
         num_scans,
         round_density=True,
+        border_width=0,
     ):
         super().__init__()
         self.img = np.asarray(Image.open(img_dir)).astype(float) / 255.0
-        self.lidar = Lidar2D(self.img, num_beams, scan_dist_scale, beam_samps)
+        if border_width != 0:
+            self.img[:, :border_width] = 1.0
+            self.img[:border_width, :] = 1.0
+            self.img[:, -border_width:-1] = 1.0
+            self.img[-border_width:-1, :] = 1.0
+
+        self.lidar = Lidar2D(
+            self.img,
+            num_beams,
+            beam_length,
+            beam_samps,
+            samp_distribution_factor,
+            collision_samps,
+            fine_samps,
+        )
 
         # Generate Scan Coordinates
         c = 0
@@ -130,10 +191,6 @@ class RandomPoseLidarDataset(torch.utils.data.Dataset):
         )
 
     def __getitem__(self, idx):
-        # meta_dict = {
-        #    "density": self.scans[idx, 2].reshape(1, -1),
-        #    "position": self.scans[idx, :2].reshape(1, -1),
-        # }
         return self.tds[idx]
 
     def __len__(self):
@@ -145,23 +202,44 @@ class TrajectoryLidarDataset(torch.utils.data.Dataset):
         self,
         img_dir,
         num_beams,
-        scan_dist_scale,
+        beam_length,
         beam_samps,
-        trajectory,
+        samp_distribution_factor,
+        collision_samps,
+        fine_samps,
+        waypoints,
+        spline_res,
         round_density=True,
+        border_width=0,
     ):
         super().__init__()
         self.img = np.asarray(Image.open(img_dir)).astype(float) / 255.0
-        self.lidar = Lidar2D(self.img, num_beams, scan_dist_scale, beam_samps)
-        self.traj = np.flip(trajectory, 1)  # get [x, y]
+        if border_width != 0:
+            self.img[:, :border_width] = 1.0
+            self.img[:border_width, :] = 1.0
+            self.img[:, -border_width:-1] = 1.0
+            self.img[-border_width:-1, :] = 1.0
+
+        self.lidar = Lidar2D(
+            self.img,
+            num_beams,
+            beam_length,
+            beam_samps,
+            samp_distribution_factor,
+            collision_samps,
+            fine_samps,
+        )
+        trajectory = interpolate_waypoints(
+            waypoints[:, 0], waypoints[:, 1], spline_res
+        )
+
         num_scans = trajectory.shape[0]
 
-        self.scan_locs = np.empty([num_scans, 2])
-        scan_list = []
-        for k in range(num_scans):
-            pos = self.__img2lidar__(self.traj[k, :].reshape(1, 2))
-            self.scan_locs[k, :] = pos
-            scan_list.append(self.lidar.scan(pos))
+        self.scan_locs = trajectory
+        scan_list = [
+            self.lidar.scan(self.scan_locs[k, :].reshape(1, 2))
+            for k in range(num_scans)
+        ]
 
         self.scans = torch.from_numpy(np.vstack(scan_list))
 
@@ -172,20 +250,19 @@ class TrajectoryLidarDataset(torch.utils.data.Dataset):
             self.scans[:, :2], self.scans[:, 2]
         )
 
-    def __img2lidar__(self, img_idx):
-        return np.array([self.lidar.nx, self.lidar.ny]) * (
-            (
-                img_idx / np.array([self.lidar.nx - 1, self.lidar.ny - 1])
-                - np.array([0.5, 0.5])
-            )
-        )
-
     def __getitem__(self, idx):
-        # meta_dict = {
-        #    "density": self.scans[idx, 2].reshape(1, -1),
-        #    "position": self.scans[idx, :2].reshape(1, -1),
-        # }
         return self.tds[idx]
 
     def __len__(self):
         return len(self.tds)
+
+
+def interpolate_waypoints(x, y, spline_res):
+    i = np.arange(len(x))
+
+    interp_i = np.linspace(0, i.max(), spline_res * i.max())
+
+    xi = interp.interp1d(i, x, kind="cubic")(interp_i)
+    yi = interp.interp1d(i, y, kind="cubic")(interp_i)
+
+    return np.hstack((xi.reshape(-1, 1), yi.reshape(-1, 1)))
