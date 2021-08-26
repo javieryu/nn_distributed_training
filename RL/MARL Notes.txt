@@ -1,0 +1,29 @@
+High-level:
+At each iteration get rollouts from each adversary (0-2).
+I need to make sure the environment can step with Zoo
+After that I will need to rollouts() to concactenate all data
+Once that is done the rest of the code should work.
+
+So the main function to edit is rollouts()
+Then just load in the MPE environment (maybe as a parallel env?)
+
+I should probably first test the MPE environment with a heuristic to make sure I can get it running
+
+
+In PPO.py change the assert(type(env.observation_space) == gym.spaces.Box) to be compatible with Petting Zoo (or delete those lines)
+
+In ppo.py, change obs, rew, done, _ = self.env.step(action) to
+for agent in env.agent_iter():
+    observation, reward, done, info = env.last()
+    action = policy(observation, agent)
+    env.step(action)
+
+
+Make evaluation multi-agent
+
+Make training multi-agent
+
+Make compatible with Petting Zoo
+
+Additions:
+pip insatll pettingzoo[mpe]==1.10.0 (adding this to requirements.txt takes forever)
