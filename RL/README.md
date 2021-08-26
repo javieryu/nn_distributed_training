@@ -31,12 +31,12 @@ python main.py
 
 To test model:
 ```
-python main.py --mode test --actor_model trained/ppo_actor.pth
+python main.py --mode test --actor_model trained/ppo_actor_tag.pth
 ```
 
 To train with existing actor/critic models:
 ```
-python main.py --actor_model trained/ppo_actor.pth --critic_model trained/ppo_critic.pth
+python main.py --actor_model trained/ppo_actor_tag.pth --critic_model trained/ppo_critic_tag.pth
 ```
 
 NOTE: to change hyperparameters, environments, etc. do it in [main.py](main.py); I didn't have them as command line arguments because I don't like how long it makes the command.
