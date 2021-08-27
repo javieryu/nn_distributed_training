@@ -8,7 +8,7 @@ Collective training of neural networks on distributed datasets.
 
 - Clone the repository and navigate to the folder in a terminal.
 
-- Run ``virtualenv venv`` to make a new virtual environment for the project in the repo folder (the ``./venv/`` folder is git ignored so it won't push those files to the repo).
+- Run ``virtualenv venv`` to make a new virtual environment for the project in the repo folder (the ``./venv/`` folder is git ignored so it won't push those files to the repo). Note that we use Python 3.7, some older versions may not work. To setup a virtualenv with a specific python version run ``virtualenv --python=/usr/bin/python3.7 venv``.
 
 - Activate the virtual environment with: ``source venv/bin/activate``.
 
