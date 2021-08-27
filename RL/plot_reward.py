@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.style.use("dark_background")
 
-times = np.load('trained/timesteps_2.npy')
-rewards = np.load('trained/avg_ep_rews_2.npy')
+times = np.load('trained/timesteps_3.npy')
+rewards = np.load('trained/avg_ep_rews_3.npy')
 
 fig, ax0 = plt.subplots(figsize=(20, 8))
 ax0.plot(times, rewards, c="indianred")
