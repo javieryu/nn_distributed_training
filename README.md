@@ -36,6 +36,8 @@ Collective training of neural networks on distributed datasets.
 
 - ``problems/`` - Contains modules that work in conjunction with the meta-scripts in the ``experiments/`` folder. These problems modules are used to store the local models for a specific distributed learning problem, and implement problem (ex: MNIST classification) specific functions like evaluation metrics and computing local losses.
 
+- ``visualization/`` - A directory that contains all of the reinforcement learning code.
+
 - ``visualization/`` - A directory for maintaining various notebooks for visualizing the results from experiments so that any figures are reproducible. Specifically, notebooks in this folder pull data from the ``experiments/outputs/`` folder and create useful visualizations.
 
 ## Architecture

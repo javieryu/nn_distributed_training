@@ -22,6 +22,11 @@ python main.py --actor_model trained/ppo_actor_tag.pth --critic_model trained/pp
 
 NOTE: to change hyperparameters, environments, etc. do it in [main.py](main.py).
 
+To plot the currently saved training statistics:
+```
+python plot_reward.py
+```
+
 ## Misc.
 I brought the pettingzoo module into this repo instead of pip installing it.
 This is because pip install pettingzoo gets a version that is too old and specifying a more recent version in pip takes too long to install for whatever reason.
