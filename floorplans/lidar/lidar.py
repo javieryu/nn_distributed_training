@@ -3,6 +3,7 @@ import numpy as np
 import torch
 import PIL
 from PIL import Image
+import random
 
 
 class Lidar2D:
@@ -12,15 +13,17 @@ class Lidar2D:
 
     def __init__(
         self,
-        img,
+        img_dir,
         num_beams,
         beam_length,
         beam_samps,
         samp_distribution_factor,
         collision_samps,
         fine_samps,
+        border_width=0,
     ):
         """Setting up the lidar scanner
+        TODO: Update this documentation
 
         Args:
             img (np.array): Array of densities (between 0 and 1)
@@ -31,9 +34,15 @@ class Lidar2D:
             beam_samps (int): Number of samples along each beam. Tuning this parameter
              will effect whether thin walls are detected.
         """
-        self.beam_stop_thresh = 0.6
+        self.img = np.asarray(Image.open(img_dir)).astype(float) / 255.0
+        if border_width != 0:
+            self.img[:, :border_width] = 1.0
+            self.img[:border_width, :] = 1.0
+            self.img[:, -border_width:-1] = 1.0
+            self.img[-border_width:-1, :] = 1.0
 
-        self.img = img
+        self.beam_stop_thresh = 0.5
+
         self.num_beams = num_beams
         self.beam_samps = beam_samps
         self.collision_samps = collision_samps
@@ -42,10 +51,10 @@ class Lidar2D:
 
         self.nx = self.img.shape[1]
         self.ny = self.img.shape[0]
-        self.beam_len = beam_length
+        self.beam_len = beam_length * max(self.nx, self.ny)
 
-        self.xs = np.linspace(-1, 1, num=self.nx)
-        self.ys = np.linspace(-1, 1, num=self.ny)
+        self.xs = self.nx * np.linspace(-0.5, 0.5, num=self.nx)
+        self.ys = self.ny * np.linspace(-0.5, 0.5, num=self.ny)
 
         self.density = interp.RectBivariateSpline(self.xs, self.ys, self.img.T)
 
@@ -123,40 +132,20 @@ class Lidar2D:
 
             scan_vals = self.density.ev(pnts[:, 0], pnts[:, 1]).reshape(-1, 1)
             beam_data.append(np.concatenate((pnts, scan_vals), axis=1))
+
         return np.vstack(beam_data)
 
 
 class RandomPoseLidarDataset(torch.utils.data.Dataset):
     def __init__(
         self,
-        img_dir,
-        num_beams,
-        beam_length,
-        beam_samps,
-        samp_distribution_factor,
-        collision_samps,
-        fine_samps,
+        lidar,
         num_scans,
         round_density=True,
-        border_width=0,
     ):
         super().__init__()
-        self.img = np.asarray(Image.open(img_dir)).astype(float) / 255.0
-        if border_width != 0:
-            self.img[:, :border_width] = 1.0
-            self.img[:border_width, :] = 1.0
-            self.img[:, -border_width:-1] = 1.0
-            self.img[-border_width:-1, :] = 1.0
-
-        self.lidar = Lidar2D(
-            self.img,
-            num_beams,
-            beam_length,
-            beam_samps,
-            samp_distribution_factor,
-            collision_samps,
-            fine_samps,
-        )
+        # Point to lidar
+        self.lidar = lidar
 
         # Generate Scan Coordinates
         c = 0
@@ -200,42 +189,28 @@ class RandomPoseLidarDataset(torch.utils.data.Dataset):
 class TrajectoryLidarDataset(torch.utils.data.Dataset):
     def __init__(
         self,
-        img_dir,
-        num_beams,
-        beam_length,
-        beam_samps,
-        samp_distribution_factor,
-        collision_samps,
-        fine_samps,
+        lidar,
         waypoints,
         spline_res,
         round_density=True,
-        border_width=0,
     ):
         super().__init__()
-        self.img = np.asarray(Image.open(img_dir)).astype(float) / 255.0
-        if border_width != 0:
-            self.img[:, :border_width] = 1.0
-            self.img[:border_width, :] = 1.0
-            self.img[:, -border_width:-1] = 1.0
-            self.img[-border_width:-1, :] = 1.0
+        self.lidar = lidar
 
-        self.lidar = Lidar2D(
-            self.img,
-            num_beams,
-            beam_length,
-            beam_samps,
-            samp_distribution_factor,
-            collision_samps,
-            fine_samps,
-        )
         trajectory = interpolate_waypoints(
             waypoints[:, 0], waypoints[:, 1], spline_res
         )
 
         num_scans = trajectory.shape[0]
 
-        self.scan_locs = trajectory
+        # self.scan_locs = trajectory
+        # Convert to lidar coordinates
+        conversion_fact = np.array(
+            [self.lidar.nx * 0.5, self.lidar.ny * 0.5]
+        ).reshape(1, 2)
+
+        self.scan_locs = trajectory * conversion_fact
+
         scan_list = [
             self.lidar.scan(self.scan_locs[k, :].reshape(1, 2))
             for k in range(num_scans)
@@ -255,6 +230,78 @@ class TrajectoryLidarDataset(torch.utils.data.Dataset):
 
     def __len__(self):
         return len(self.tds)
+
+
+class OnlineTrajectoryLidarDataset(torch.utils.data.Dataset):
+    def __init__(
+        self,
+        lidar,
+        waypoints,
+        spline_res,
+        num_scans_in_window,
+        round_density=True,
+    ):
+        super().__init__()
+        self.lidar = lidar
+
+        # trajectory = interpolate_waypoints(
+        #    waypoints[:, 0], waypoints[:, 1], spline_res
+        # )
+        trajectory = waypoints
+
+        self.num_scans = trajectory.shape[0]
+        # self.scan_locs = trajectory
+        # Convert to lidar coordinates
+        conversion_fact = np.array(
+            [self.lidar.nx * 0.5, self.lidar.ny * 0.5]
+        ).reshape(1, 2)
+
+        self.scan_locs = trajectory * conversion_fact
+
+        scan_list = [
+            self.lidar.scan(self.scan_locs[k, :].reshape(1, 2))
+            for k in range(self.num_scans)
+        ]
+
+        self.scans = torch.from_numpy(np.vstack(scan_list))
+
+        if round_density:
+            self.scans[:, 2] = np.rint(self.scans[:, 2])
+
+        self.tds = torch.utils.data.TensorDataset(
+            self.scans[:, :2], self.scans[:, 2]
+        )
+
+        self.batch_tracker = torch.zeros(len(self.tds))
+        self.lidar = lidar
+        self.num_scans_in_window = num_scans_in_window
+
+        self.scan_size = lidar.num_beams * lidar.beam_samps
+        self.curr_scan_idx = num_scans_in_window - 1
+
+        self.gen_next_index_list()
+
+    def __getitem__(self, index):
+        if not self.curr_idx_list:
+            self.gen_next_index_list()
+
+        real_idx = self.curr_idx_list.pop()
+        self.batch_tracker[real_idx] += 1
+
+        return self.tds[real_idx]
+
+    def __len__(self):
+        return self.num_scans * self.scan_size * self.num_scans_in_window
+
+    def gen_next_index_list(self):
+        if self.curr_scan_idx >= self.num_scans:
+            self.curr_scan_idx = 0
+        self.curr_scan_idx += 1
+
+        lb = self.scan_size * (self.curr_scan_idx - self.num_scans_in_window)
+        ub = self.scan_size * (self.curr_scan_idx)
+        self.curr_idx_list = list(range(lb, ub))
+        random.shuffle(self.curr_idx_list)
 
 
 def interpolate_waypoints(x, y, spline_res):
