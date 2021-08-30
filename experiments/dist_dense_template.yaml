@@ -1,16 +1,21 @@
 experiment:
   name: "dist_dense_template"
   output_metadir: "../results/"
-  writeout: true
+  writeout: false
   use_cuda: true
   data:
     data_dir: "../floorplans/32_data/"
-    split_type: "random"
+    split_type: "trajectory"
     num_beams: 20
     beam_samps: 20
-    scan_dist_scale: 0.2
+    beam_length: 0.2
+    collision_samps: 25
+    fine_samps: 5
+    samp_distribution_factor: 0.8
+    border_width: 20
     round_density: True
     num_scans: 300
+    spline_res: 120
     num_validation_scans: 500 
   loss: "BCE"
   graph:
@@ -50,4 +55,4 @@ problem_configs:
       primal_iterations: 1
       primal_optimizer: "adam"
       primal_lr: 0.0001
-      profile: True
+      profile: False

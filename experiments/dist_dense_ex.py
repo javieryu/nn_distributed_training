@@ -16,6 +16,8 @@ from optimizers.cadmm import CADMM
 from optimizers.dsgt import DSGT
 from utils import graph_generation
 from floorplans.lidar.lidar import (
+    Lidar2D,
+    ClippedLidar2D,
     RandomPoseLidarDataset,
     TrajectoryLidarDataset,
 )
@@ -118,17 +120,34 @@ def experiment(yaml_pth):
         # Save the graph for future visualization
         nx.write_gpickle(graph, os.path.join(output_dir, "graph.gpickle"))
 
-    # Load the datasets
+    # Load the datasets, and lidar object
     data_conf = exp_conf["data"]
     print("Loading the data ...")
+    img_path = os.path.join(data_conf["data_dir"], "floor_img.png")
+
+    if data_conf["clipped_lidar"]:
+        lidar = ClippedLidar2D(
+            img_path,
+            data_conf["num_beams"],
+            data_conf["beam_length"],
+            data_conf["beam_samps"],
+        )
+    else:
+        lidar = Lidar2D(
+            img_path,
+            data_conf["num_beams"],
+            data_conf["beam_length"],
+            data_conf["beam_samps"],
+            data_conf["samp_distribution_factor"],
+            data_conf["collision_samps"],
+            data_conf["fine_samps"],
+            border_width=data_conf["border_width"],
+        )
 
     if data_conf["split_type"] == "random":
         train_subsets = [
             RandomPoseLidarDataset(
-                os.path.join(data_conf["data_dir"], "floor_img.png"),
-                data_conf["num_beams"],
-                data_conf["scan_dist_scale"],
-                data_conf["beam_samps"],
+                lidar,
                 data_conf["num_scans"],
                 round_density=data_conf["round_density"],
             )
@@ -136,28 +155,29 @@ def experiment(yaml_pth):
         ]
     elif data_conf["split_type"] == "trajectory":
         data_dir = data_conf["data_dir"]
-        traj_pths = glob.glob(os.path.join(data_dir, "*.npy"))
+        waypoint_pths = glob.glob(
+            os.path.join(data_dir, data_conf["waypoint_subdir"], "*.npy")
+        )
 
         # Check that N is consistent with the number of
         # trajectories that are avaliable.
-        if N > len(traj_pths):
-            error_str = "Requested more nodes than there are trajectories."
+        if N > len(waypoint_pths):
+            error_str = "Requested more nodes than there are waypoint files."
             error_str += (
-                "Requested {} nodes, and found {} trajectories.".format(
-                    N, len(traj_pths)
+                "Requested {} nodes, and found {} waypoint files.".format(
+                    N, len(waypoint_pths)
                 )
             )
             raise NameError(error_str)
 
         train_subsets = []
         for i in range(N):
-            traj = np.load(traj_pths[i])
+            waypoints = np.load(waypoint_pths[i])
             node_set = TrajectoryLidarDataset(
-                os.path.join(data_conf["data_dir"], "floor_img.png"),
-                data_conf["num_beams"],
-                data_conf["scan_dist_scale"],
-                data_conf["beam_samps"],
-                traj,
+                lidar,
+                waypoints,
+                data_conf["spline_res"],
+                round_density=data_conf["round_density"],
             )
             train_subsets.append(node_set)
     else:
@@ -171,10 +191,7 @@ def experiment(yaml_pth):
 
     # Generate the validation set
     val_set = RandomPoseLidarDataset(
-        os.path.join(data_conf["data_dir"], "floor_img.png"),
-        data_conf["num_beams"],
-        data_conf["scan_dist_scale"],
-        data_conf["beam_samps"],
+        lidar,
         data_conf["num_validation_scans"],
         round_density=data_conf["round_density"],
     )
@@ -188,6 +205,8 @@ def experiment(yaml_pth):
         base_loss = torch.nn.BCELoss()
     elif exp_conf["loss"] == "MSE":
         base_loss = torch.nn.MSELoss()
+    elif exp_conf["loss"] == "L1":
+        base_loss = torch.nn.L1Loss()
     else:
         raise NameError("Unknown loss function.")
 

@@ -5,12 +5,19 @@ experiment:
   use_cuda: true
   data:
     data_dir: "../floorplans/32_data/"
+    waypoint_subdir: "some_overlap"
     split_type: "trajectory"
     num_beams: 20
     beam_samps: 20
-    scan_dist_scale: 0.2
+    beam_length: 0.2
+    clipped_lidar: True
+    collision_samps: 20
+    fine_samps: 3
+    samp_distribution_factor: 1.0
+    border_width: 30
     round_density: True
-    num_scans: 5000
+    num_scans: 3000
+    spline_res: 120
     num_validation_scans: 500 
   loss: "BCE"
   graph:
@@ -31,7 +38,7 @@ experiment:
     verbose: True
 problem_configs:
   problem1:
-    problem_name: "config1"
+    problem_name: "cadmm"
     train_batch_size: 8000
     val_batch_size: 10000
     evaluate_frequency: 20
@@ -44,7 +51,7 @@ problem_configs:
       - "current_epoch"
     optimizer_config:
       alg_name: "cadmm"
-      rho_init: 1.0
+      rho_init: 3.0
       rho_scaling: 1.0
       outer_iterations: 1750
       primal_iterations: 5
@@ -66,5 +73,5 @@ problem_configs:
     optimizer_config:
       alg_name: "dsgt"
       alpha: 0.005
-      outer_iterations: 1750
+      outer_iterations: 5000
       profile: false

@@ -116,6 +116,9 @@ class PolygonInteractor:
         self.ax.draw_artist(self.poly)
         self.ax.draw_artist(self.line)
         self.ax.draw_artist(self.spline)
+        self.ax.set_title(
+            "Number of waypoints: {}".format(self.poly.xy.shape[0])
+        )
         # do not need to blit here, this will fire before the screen is
         # updated
 
