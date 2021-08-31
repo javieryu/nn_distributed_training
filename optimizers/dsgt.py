@@ -9,10 +9,6 @@ class DSGT:
         self.conf = conf
         self.device = device
 
-        # Compute consensus weight matrix
-        self.W = graph_generation.get_metropolis(ddl_problem.graph)
-        self.W = self.W.to(self.device)
-
         # Get list of all model parameter pointers
         self.plists = {
             i: list(self.pr.models[i].parameters()) for i in range(self.pr.N)
@@ -49,6 +45,10 @@ class DSGT:
             if k % eval_every == 0 or k == oits - 1:
                 self.pr.evaluate_metrics()
 
+            # Compute graph weights
+            W = graph_generation.get_metropolis(ddl_problem.graph)
+            W = W.to(self.device)
+
             # Iterate over the agents for communication step
             for i in range(self.pr.N):
                 neighs = list(self.pr.graph.neighbors(i))
@@ -56,13 +56,11 @@ class DSGT:
                     # Update each parameter individually across all neighbors
                     for p in range(self.num_params):
                         # Ego update
-                        self.plists[i][p].multiply_(self.W[i, i])
+                        self.plists[i][p].multiply_(W[i, i])
                         self.plists[i][p].add_(-self.alpha * self.ylists[i][p])
                         # Neighbor updates
                         for j in neighs:
-                            self.plists[i][p].add_(
-                                self.W[i, j] * self.plists[j][p]
-                            )
+                            self.plists[i][p].add_(W[i, j] * self.plists[j][p])
 
             # Compute the batch loss and update using the gradients
             for i in range(self.pr.N):
@@ -74,11 +72,9 @@ class DSGT:
                 # Locally update model with gradient
                 with torch.no_grad():
                     for p in range(self.num_params):
-                        self.ylists[i][p].multiply_(self.W[i, i])
+                        self.ylists[i][p].multiply_(W[i, i])
                         for j in neighs:
-                            self.ylists[i][p].add_(
-                                self.W[i, j] * self.ylists[j][p]
-                            )
+                            self.ylists[i][p].add_(W[i, j] * self.ylists[j][p])
 
                         self.ylists[i][p].add_(self.plists[i][p].grad)
                         self.ylists[i][p].add_(-1.0 * self.glists[i][p])

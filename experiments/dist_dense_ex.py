@@ -131,6 +131,7 @@ def experiment(yaml_pth):
             data_conf["num_beams"],
             data_conf["beam_length"],
             data_conf["beam_samps"],
+            border_width=data_conf["border_width"],
         )
     else:
         lidar = Lidar2D(

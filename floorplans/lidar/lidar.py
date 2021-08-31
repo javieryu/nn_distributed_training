@@ -345,10 +345,9 @@ class OnlineTrajectoryLidarDataset(torch.utils.data.Dataset):
         super().__init__()
         self.lidar = lidar
 
-        # trajectory = interpolate_waypoints(
-        #    waypoints[:, 0], waypoints[:, 1], spline_res
-        # )
-        trajectory = waypoints
+        trajectory = interpolate_waypoints(
+            waypoints[:, 0], waypoints[:, 1], spline_res
+        )
 
         self.num_scans = trajectory.shape[0]
         # self.scan_locs = trajectory
@@ -373,12 +372,13 @@ class OnlineTrajectoryLidarDataset(torch.utils.data.Dataset):
             self.scans[:, :2], self.scans[:, 2]
         )
 
-        self.batch_tracker = torch.zeros(len(self.tds))
+        # self.batch_tracker = torch.zeros(len(self.tds))
         self.lidar = lidar
         self.num_scans_in_window = num_scans_in_window
 
         self.scan_size = lidar.num_beams * lidar.beam_samps
-        self.curr_scan_idx = num_scans_in_window - 1
+        self.curr_scan_idx = 0
+        self.curr_pos = self.scan_locs[self.curr_scan_idx, :]
 
         self.gen_next_index_list()
 
@@ -387,20 +387,39 @@ class OnlineTrajectoryLidarDataset(torch.utils.data.Dataset):
             self.gen_next_index_list()
 
         real_idx = self.curr_idx_list.pop()
-        self.batch_tracker[real_idx] += 1
+        # self.batch_tracker[real_idx] += 1
 
         return self.tds[real_idx]
 
     def __len__(self):
-        return self.num_scans * self.scan_size * self.num_scans_in_window
+        return len(self.tds)
 
     def gen_next_index_list(self):
-        if self.curr_scan_idx >= self.num_scans:
-            self.curr_scan_idx = 0
-        self.curr_scan_idx += 1
+        """This function updates the list that keeps track of the
+        indexes that can be accessed in the get_item call. Its terribly
+        written and should only be read in cases of extreme emergency.
+        If this is a case of emergency, good luck. Javier
+        """
+        if (self.curr_scan_idx + self.num_scans_in_window) >= self.num_scans:
+            if self.curr_scan_idx == self.num_scans - 1:
+                self.curr_scan_idx = 0
+                self.curr_scan_idx += self.num_scans_in_window
+                lb = self.scan_size * (
+                    self.curr_scan_idx - self.num_scans_in_window
+                )
+                ub = self.scan_size * (self.curr_scan_idx)
+            else:
+                lb = self.scan_size * self.curr_scan_idx
+                ub = len(self.tds)
+                self.curr_scan_idx = self.num_scans - 1
+        else:
+            self.curr_scan_idx += self.num_scans_in_window
+            lb = self.scan_size * (
+                self.curr_scan_idx - self.num_scans_in_window
+            )
+            ub = self.scan_size * (self.curr_scan_idx)
 
-        lb = self.scan_size * (self.curr_scan_idx - self.num_scans_in_window)
-        ub = self.scan_size * (self.curr_scan_idx)
+        self.curr_pos = self.scan_locs[self.curr_scan_idx, :]
         self.curr_idx_list = list(range(lb, ub))
         random.shuffle(self.curr_idx_list)
 

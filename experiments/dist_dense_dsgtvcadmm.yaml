@@ -21,7 +21,7 @@ experiment:
     num_validation_scans: 500 
   loss: "BCE"
   graph:
-    num_nodes: 6
+    num_nodes: 7
     type: "random"
     p: 0.6
     gen_attempts: 10
