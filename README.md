@@ -8,7 +8,7 @@ Collective training of neural networks on distributed datasets.
 
 - Clone the repository and navigate to the folder in a terminal.
 
-- Run ``virtualenv venv`` to make a new virtual environment for the project in the repo folder (the ``./venv/`` folder is git ignored so it won't push those files to the repo).
+- Run ``virtualenv venv`` to make a new virtual environment for the project in the repo folder (the ``./venv/`` folder is git ignored so it won't push those files to the repo). Note that we use Python 3.7, some older versions may not work. To setup a virtualenv with a specific python version run ``virtualenv --python=/usr/bin/python3.7 venv``.
 
 - Activate the virtual environment with: ``source venv/bin/activate``.
 
@@ -35,6 +35,8 @@ Collective training of neural networks on distributed datasets.
 - ``planner/`` - Contains a module with a simple waypoint based A* planner that is to be used in conjunction with the ``lidar`` module to simulated scans from physically realizable trajectories.
 
 - ``problems/`` - Contains modules that work in conjunction with the meta-scripts in the ``experiments/`` folder. These problems modules are used to store the local models for a specific distributed learning problem, and implement problem (ex: MNIST classification) specific functions like evaluation metrics and computing local losses.
+
+- ``visualization/`` - A directory that contains all of the reinforcement learning code.
 
 - ``visualization/`` - A directory for maintaining various notebooks for visualizing the results from experiments so that any figures are reproducible. Specifically, notebooks in this folder pull data from the ``experiments/outputs/`` folder and create useful visualizations.
 
