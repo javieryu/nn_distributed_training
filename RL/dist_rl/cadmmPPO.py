@@ -77,10 +77,10 @@ class CADMMPPO:
         #        raise NameError("CADMM primal optimizer is unknown.")
 
         opt_actor = torch.optim.Adam(
-            self.pr.actors[i].parameters(), lr=self.primal_lr[k]
+            self.pr.actors[i].parameters(), lr=self.primal_lr[0]
         )
         opt_critic = torch.optim.Adam(
-            self.pr.critics[i].parameters(), lr=self.primal_lr[k]
+            self.pr.critics[i].parameters(), lr=self.primal_lr[0]
         )
 
         for _ in range(self.pits):
@@ -132,13 +132,11 @@ class CADMMPPO:
 
     def train(self, profiler=None):
         # eval_every = self.pr.conf["metrics_config"]["evaluate_frequency"]
-        oits = self.conf["outer_iterations"]
-        for k in range(oits):
+        max_rl_timesteps = self.conf["max_rl_timesteps"]
+        k = 0
+        while self.pr.logger["t_so_far"] < max_rl_timesteps:
             self.pr.split_rollout_marl()
             self.pr.update_advantage()
-
-            # if k % eval_every == 0 or k == oits - 1:
-            #    self.pr.evaluate_metrics(at_end=(k == oits - 1))
 
             # Get the current primal variables
             ths_actor = {
@@ -183,5 +181,7 @@ class CADMMPPO:
 
             if profiler is not None:
                 profiler.step()
+
+            k += 1
 
         return

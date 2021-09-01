@@ -29,7 +29,6 @@ def main():
         "render": False,
         "render_every_i": 1,
     }
-    n_rl_steps = 10_000
     env.reset()
     obs_dim = env.observation_spaces["adversary_0"].shape[0]
     act_dim = env.action_spaces["adversary_0"].shape[0]
@@ -40,7 +39,6 @@ def main():
     dppo = DistPPOProblem(
         base_actor, base_critic, graph, env, **hyperparameters
     )
-    print(int(n_rl_steps / hyperparameters["timesteps_per_batch"]))
     opt_confs = {
         "rho_init": 1.0,
         "rho_scaling": 1.0,
@@ -49,7 +47,8 @@ def main():
         "lr_decay_type": "constant",
         "persistant_primal_opt": False,
         "primal_iterations": hyperparameters["n_updates_per_iteration"],
-        "outer_iterations": int(n_rl_steps / hyperparameters["timesteps_per_batch"]),
+        "max_rl_timesteps": 10_000,
+        "outer_iterations": 10_000,
     }
 
     device = torch.device("cpu")
