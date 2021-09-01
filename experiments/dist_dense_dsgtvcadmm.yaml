@@ -10,14 +10,14 @@ experiment:
     num_beams: 20
     beam_samps: 20
     beam_length: 0.2
-    clipped_lidar: True
+    clipped_lidar: False
     collision_samps: 20
     fine_samps: 3
     samp_distribution_factor: 1.0
-    border_width: 30
+    border_width: 10
     round_density: True
     num_scans: 3000
-    spline_res: 120
+    spline_res: 50
     num_validation_scans: 500 
   loss: "BCE"
   graph:
@@ -26,7 +26,7 @@ experiment:
     p: 0.6
     gen_attempts: 10
   model:
-    shape: [2, 86, 32, 32, 32, 1]
+    shape: [2, 256, 64, 32, 32, 1]
     scale: 0.05
   individual_training:
     train_solo: false
@@ -51,12 +51,12 @@ problem_configs:
       - "current_epoch"
     optimizer_config:
       alg_name: "cadmm"
-      rho_init: 3.0
+      rho_init: 1.0
       rho_scaling: 1.0
       outer_iterations: 1750
       primal_iterations: 5
       primal_optimizer: "adam"
-      primal_lr: 0.001
+      primal_lr: 0.0008
       profile: false
   problem2:
     problem_name: "dsgt"

@@ -24,6 +24,7 @@ class DistOnlineDensityProblem:
 
         # Initialize Communication Graph
         self.comm_radius = conf["comm_radius"]
+        self.dynamic_graph = conf["dynamic_graph"]
         self.N = len(self.train_sets)
         self.update_graph()
 
@@ -55,6 +56,13 @@ class DistOnlineDensityProblem:
         self.metrics = {met_name: [] for met_name in self.conf["metrics"]}
         self.epoch_tracker = torch.zeros(self.N)
         self.forward_cnt = 0
+
+        if "train_loss_moving_average" in self.metrics:
+            self.track_tloss = True
+            self.tloss_tracker = torch.zeros(self.N).to(device)
+            self.tloss_decay = conf["metrics_config"]["tloss_decay"]
+        else:
+            self.track_tloss = False
 
         if "mesh_grid_density" in self.metrics:
             X, Y = np.meshgrid(val_set.lidar.xs, val_set.lidar.ys)
@@ -105,11 +113,21 @@ class DistOnlineDensityProblem:
             # because this is symmetric across nodes we only have to do
             # this for node 0, and it will be consistent with all nodes.
             self.forward_cnt += self.conf["train_batch_size"]
-            self.update_graph()
+            if self.dynamic_graph:
+                self.update_graph()
 
         yh = self.models[i].forward(locs.to(self.device))
+        batch_loss = self.base_loss(torch.squeeze(yh), dens.to(self.device))
 
-        return self.base_loss(torch.squeeze(yh), dens.to(self.device))
+        with torch.no_grad():
+            if self.track_tloss:
+                if self.tloss_tracker[i] != 0.0:
+                    self.tloss_tracker[i] *= 1 - self.tloss_decay
+                    self.tloss_tracker[i] += self.tloss_decay * batch_loss
+                else:
+                    self.tloss_tracker[i] += batch_loss
+
+        return batch_loss
 
     def update_graph(self):
         curr_poses = np.vstack(
@@ -166,7 +184,7 @@ class DistOnlineDensityProblem:
 
         return mesh_density
 
-    def evaluate_metrics(self):
+    def evaluate_metrics(self, at_end=False):
         """Evaluate models, and then append values to the metric lists."""
 
         evalprint = "| "
@@ -203,12 +221,30 @@ class DistOnlineDensityProblem:
                     torch.amin(val_losses).item(),
                     torch.amax(val_losses).item(),
                 )
+            elif met_name == "train_loss_moving_average":
+                self.metrics[met_name].append(self.tloss_tracker.clone())
+                evalprint += "Train Loss MA: {:.4f} - {:.4f} | ".format(
+                    torch.amin(self.tloss_tracker).item(),
+                    torch.amax(self.tloss_tracker).item(),
+                )
             elif met_name == "mesh_grid_density":
                 # Compute the mesh grid densities of each node
                 # used for post run visualization so there is no
                 # need to print anything.
-                densities = [self.mesh_grid_density(i) for i in range(self.N)]
-                self.metrics[met_name].append(torch.stack(densities))
+                if not self.conf["metrics_config"]["mesh_only_at_end"]:
+                    densities = [
+                        self.mesh_grid_density(i) for i in range(self.N)
+                    ]
+                    self.metrics[met_name].append(torch.stack(densities))
+                elif (
+                    self.conf["metrics_config"]["mesh_only_at_end"] and at_end
+                ):
+                    densities = [
+                        self.mesh_grid_density(i) for i in range(self.N)
+                    ]
+                    self.metrics[met_name].append(torch.stack(densities))
+                else:
+                    pass
             elif met_name == "forward_pass_count":
                 # Number of forward passes performed by each node
                 self.metrics[met_name].append(self.forward_cnt)

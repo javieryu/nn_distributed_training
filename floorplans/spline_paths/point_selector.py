@@ -262,7 +262,7 @@ if __name__ == "__main__":
     ax.set_title("Click and drag a point to move it")
     plt.show()
 
-    traj_dir = os.path.join(img_dir, "some_overlap")
+    traj_dir = os.path.join(img_dir, "tight_paths")
     print("Save directory: ", traj_dir)
     answer = input("Save the current trajectory? (y/n): ")
 
