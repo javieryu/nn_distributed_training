@@ -47,8 +47,8 @@ def main():
         "lr_decay_type": "constant",
         "persistant_primal_opt": False,
         "primal_iterations": hyperparameters["n_updates_per_iteration"],
-        "max_rl_timesteps": 10_000,
-        "outer_iterations": 10_000,
+        "max_rl_timesteps": 5_000_000,
+        "outer_iterations": 5_000_000,
     }
 
     device = torch.device("cpu")
