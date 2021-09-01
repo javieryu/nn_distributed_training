@@ -26,7 +26,7 @@ class DSGT:
         self.ylists = {i: copy.deepcopy(base_zeros) for i in range(self.pr.N)}
 
     def train(self, profiler=None):
-        eval_every = self.pr.conf["evaluate_frequency"]
+        eval_every = self.pr.conf["metrics_config"]["evaluate_frequency"]
         oits = self.conf["outer_iterations"]
 
         # Initialize Ylists and Glists

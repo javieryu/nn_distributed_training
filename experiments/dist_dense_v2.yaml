@@ -41,7 +41,6 @@ problem_configs:
     problem_name: "cadmm"
     train_batch_size: 8000
     val_batch_size: 10000
-    evaluate_frequency: 20
     verbose_evals: True
     metrics:
       - "forward_pass_count"
@@ -49,6 +48,8 @@ problem_configs:
       - "consensus_error"
       - "mesh_grid_density"
       - "current_epoch"
+    metrics_config: 
+      evaluate_frequency: 20
     optimizer_config:
       alg_name: "cadmm"
       rho_init: 0.5
