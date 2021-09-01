@@ -23,12 +23,13 @@ def main():
         "timesteps_per_batch": 2000,
         "max_timesteps_per_episode": steps,
         "gamma": 0.99,
-        "n_updates_per_iteration": 10,  # epochs
+        "n_updates_per_iteration": 5,  # epochs
         "lr": 3e-4,
         "clip": 0.2,
         "render": False,
         "render_every_i": 1,
     }
+    n_rl_steps = 10_000
     env.reset()
     obs_dim = env.observation_spaces["adversary_0"].shape[0]
     act_dim = env.action_spaces["adversary_0"].shape[0]
@@ -43,12 +44,12 @@ def main():
     opt_confs = {
         "rho_init": 1.0,
         "rho_scaling": 1.0,
-        "primal_lr_start": 1e-4,
+        "primal_lr_start": hyperparameters["lr"],
         "primal_lr_finish": 0.001,
         "lr_decay_type": "constant",
         "persistant_primal_opt": False,
-        "primal_iterations": 10,
-        "outer_iterations": 500,
+        "primal_iterations": hyperparameters["n_updates_per_iteration"],
+        "outer_iterations": n_rl_steps / hyperparameters["timesteps_per_batch"],
     }
 
     device = torch.device("cpu")
