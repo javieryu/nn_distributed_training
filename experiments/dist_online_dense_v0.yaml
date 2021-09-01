@@ -1,0 +1,123 @@
+experiment:
+  name: "dist_online_dense_v0"
+  output_metadir: "../results/"
+  writeout: true
+  use_cuda: true
+  data:
+    data_dir: "../floorplans/32_data/"
+    waypoint_subdir: "tight_paths"
+    split_type: "trajectory"
+    num_scans_in_window: 600
+    num_beams: 20
+    beam_samps: 25
+    beam_length: 0.2
+    collision_samps: 50
+    fine_samps: 3
+    samp_distribution_factor: 1.0
+    border_width: 30
+    round_density: True
+    spline_res: 40
+    num_validation_scans: 500 
+  loss: "BCE"
+  model:
+    shape: [2, 256, 64, 64, 64, 1]
+    scale: 0.05
+  individual_training:
+    train_solo: false
+    optimizer: "adam"
+    lr: 0.001
+    epochs: 1
+    train_batch_size: 8000
+    val_batch_size: 10000
+    verbose: True
+problem_configs:
+  problem1:
+    problem_name: "cadmm_log"
+    train_batch_size: 8000
+    val_batch_size: 10000
+    comm_radius: 1500.0
+    verbose_evals: True
+    dynamic_graph: True
+    metrics:
+      - "forward_pass_count"
+      - "train_loss_moving_average"
+      - "validation_loss"
+      - "consensus_error"
+      - "mesh_grid_density"
+      - "current_epoch"
+    metrics_config:
+      evaluate_frequency: 20
+      tloss_decay: 0.2
+      mesh_only_at_end: True
+    optimizer_config:
+      alg_name: "cadmm"
+      rho_init: 0.5
+      rho_scaling: 1.0
+      outer_iterations: 3000
+      primal_iterations: 5
+      primal_optimizer: "adam"
+      persistant_primal_opt: False
+      primal_lr_start: 0.001
+      primal_lr_finish: 0.0005
+      lr_decay_type: "log"
+      profile: false
+  problem2:
+    problem_name: "cadmm_lin"
+    train_batch_size: 8000
+    val_batch_size: 10000
+    comm_radius: 1500.0
+    verbose_evals: True
+    dynamic_graph: True
+    metrics:
+      - "forward_pass_count"
+      - "train_loss_moving_average"
+      - "validation_loss"
+      - "consensus_error"
+      - "mesh_grid_density"
+      - "current_epoch"
+    metrics_config:
+      evaluate_frequency: 20
+      tloss_decay: 0.2
+      mesh_only_at_end: True
+    optimizer_config:
+      alg_name: "cadmm"
+      rho_init: 0.5
+      rho_scaling: 1.0
+      outer_iterations: 3000
+      primal_iterations: 5
+      primal_optimizer: "adam"
+      persistant_primal_opt: False
+      primal_lr_start: 0.001
+      primal_lr_finish: 0.0005
+      lr_decay_type: "linear"
+      profile: false
+  problem3:
+    problem_name: "cadmm_const"
+    train_batch_size: 8000
+    val_batch_size: 10000
+    comm_radius: 1500.0
+    verbose_evals: True
+    dynamic_graph: True
+    metrics:
+      - "forward_pass_count"
+      - "train_loss_moving_average"
+      - "validation_loss"
+      - "consensus_error"
+      - "mesh_grid_density"
+      - "current_epoch"
+    metrics_config:
+      evaluate_frequency: 20
+      tloss_decay: 0.2
+      mesh_only_at_end: True
+    optimizer_config:
+      alg_name: "cadmm"
+      rho_init: 0.5
+      rho_scaling: 1.0
+      outer_iterations: 4000
+      primal_iterations: 5
+      primal_optimizer: "adam"
+      persistant_primal_opt: False
+      primal_lr_start: 0.001
+      primal_lr_finish: 0.00005
+      lr_decay_type: "constant"
+      profile: false

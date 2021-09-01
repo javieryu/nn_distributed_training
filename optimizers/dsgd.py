@@ -24,7 +24,7 @@ class DSGD:
         self.mu = conf["mu"]
 
     def train(self, profiler=None):
-        eval_every = self.pr.conf["evaluate_frequency"]
+        eval_every = self.pr.conf["metrics_config"]["evaluate_frequency"]
         oits = self.conf["outer_iterations"]
 
         # Optimization loop

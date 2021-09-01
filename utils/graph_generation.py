@@ -1,4 +1,6 @@
 import networkx as nx
+import numpy as np
+import scipy
 import torch
 
 
@@ -52,3 +54,25 @@ def get_metropolis(graph):
         W[i, i] = 1.0 - torch.sum(W[i, :])
 
     return W
+
+
+def euclidean_disk_graph(poses, radius):
+    """Takes an array of poses and computes the
+    euclidean distances between all poses. The distances
+    are thresholded, and a networkx graph is returned
+
+    Args:
+        poses (numpy.matrix): poses of nodes shape [N, 2]
+        radius (float): nodes with a pairwise distance less
+        than this number can communicate.
+
+    Returns:
+        networkx.Graph: the generated euclidean disk graph
+        bool: the connectivity of the generated graph
+    """
+    dist_mat = scipy.spatial.distance.pdist(poses, "euclidean")
+    dist_mat = scipy.spatial.distance.squareform(dist_mat)
+    adj_mat = dist_mat <= radius
+    graph = nx.from_numpy_matrix(adj_mat)
+
+    return graph, nx.is_connected(graph)

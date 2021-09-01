@@ -1,0 +1,61 @@
+experiment:
+  name: "dist_dense_v2"
+  output_metadir: "../results/"
+  writeout: true
+  use_cuda: true
+  data:
+    data_dir: "../floorplans/32_data/"
+    waypoint_subdir: "tight_paths"
+    split_type: "trajectory"
+    num_beams: 20
+    beam_samps: 25
+    beam_length: 0.2
+    clipped_lidar: False
+    collision_samps: 50
+    fine_samps: 3
+    samp_distribution_factor: 1.0
+    border_width: 30
+    round_density: True
+    num_scans: 3000
+    spline_res: 80
+    num_validation_scans: 500 
+  loss: "BCE"
+  graph:
+    num_nodes: 6
+    type: "random"
+    p: 0.75
+    gen_attempts: 10
+  model:
+    shape: [2, 256, 64, 64, 64, 1]
+    scale: 0.05
+  individual_training:
+    train_solo: false
+    optimizer: "adam"
+    lr: 0.005
+    epochs: 6
+    train_batch_size: 10000
+    val_batch_size: 10000
+    verbose: True
+problem_configs:
+  problem1:
+    problem_name: "cadmm"
+    train_batch_size: 8000
+    val_batch_size: 10000
+    verbose_evals: True
+    metrics:
+      - "forward_pass_count"
+      - "validation_loss"
+      - "consensus_error"
+      - "mesh_grid_density"
+      - "current_epoch"
+    metrics_config: 
+      evaluate_frequency: 20
+    optimizer_config:
+      alg_name: "cadmm"
+      rho_init: 0.5
+      rho_scaling: 1.0
+      outer_iterations: 1750
+      primal_iterations: 5
+      primal_optimizer: "adam"
+      primal_lr: 0.001
+      profile: false
