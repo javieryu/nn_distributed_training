@@ -192,7 +192,7 @@ class DistPPOProblem:
         batch_rtgs = {i: [] for i in range(self.N)}
         batch_lens = []
         joint_batch_rews = []
-        joint_ep_rews = []
+        
 
         t = 0  # Keeps track of how many timesteps we've run so far this batch
 
@@ -201,7 +201,7 @@ class DistPPOProblem:
             ep_rews = {
                 i: [] for i in range(self.N)
             }  # rewards collected per episode
-
+            joint_ep_rews = []
             # Reset the environment. Note that obs is short for observation.
             self.env.reset()
             done = False
