@@ -40,7 +40,7 @@ def main():
     dppo = DistPPOProblem(
         base_actor, base_critic, graph, env, **hyperparameters
     )
-
+    print(int(n_rl_steps / hyperparameters["timesteps_per_batch"]))
     opt_confs = {
         "rho_init": 1.0,
         "rho_scaling": 1.0,
@@ -49,7 +49,7 @@ def main():
         "lr_decay_type": "constant",
         "persistant_primal_opt": False,
         "primal_iterations": hyperparameters["n_updates_per_iteration"],
-        "outer_iterations": n_rl_steps / hyperparameters["timesteps_per_batch"],
+        "outer_iterations": int(n_rl_steps / hyperparameters["timesteps_per_batch"]),
     }
 
     device = torch.device("cpu")
