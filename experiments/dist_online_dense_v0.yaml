@@ -51,9 +51,9 @@ problem_configs:
       mesh_only_at_end: True
     optimizer_config:
       alg_name: "cadmm"
-      rho_init: 0.5
-      rho_scaling: 1.0
-      outer_iterations: 3000
+      rho_init: 0.1
+      rho_scaling: 1.0006
+      outer_iterations: 4000
       primal_iterations: 5
       primal_optimizer: "adam"
       persistant_primal_opt: False
@@ -81,9 +81,9 @@ problem_configs:
       mesh_only_at_end: True
     optimizer_config:
       alg_name: "cadmm"
-      rho_init: 0.5
-      rho_scaling: 1.0
-      outer_iterations: 3000
+      rho_init: 0.1
+      rho_scaling: 1.0006
+      outer_iterations: 4000
       primal_iterations: 5
       primal_optimizer: "adam"
       persistant_primal_opt: False
@@ -111,8 +111,8 @@ problem_configs:
       mesh_only_at_end: True
     optimizer_config:
       alg_name: "cadmm"
-      rho_init: 0.5
-      rho_scaling: 1.0
+      rho_init: 0.1
+      rho_scaling: 1.0006
       outer_iterations: 4000
       primal_iterations: 5
       primal_optimizer: "adam"

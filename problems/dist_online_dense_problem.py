@@ -123,9 +123,11 @@ class DistOnlineDensityProblem:
             if self.track_tloss:
                 if self.tloss_tracker[i] != 0.0:
                     self.tloss_tracker[i] *= 1 - self.tloss_decay
-                    self.tloss_tracker[i] += self.tloss_decay * batch_loss
+                    self.tloss_tracker[i] += (
+                        self.tloss_decay * batch_loss.clone()
+                    )
                 else:
-                    self.tloss_tracker[i] += batch_loss
+                    self.tloss_tracker[i] += batch_loss.clone()
 
         return batch_loss
 

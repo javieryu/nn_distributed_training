@@ -46,7 +46,7 @@ class DSGT:
                 self.pr.evaluate_metrics()
 
             # Compute graph weights
-            W = graph_generation.get_metropolis(ddl_problem.graph)
+            W = graph_generation.get_metropolis(self.pr.graph)
             W = W.to(self.device)
 
             # Iterate over the agents for communication step

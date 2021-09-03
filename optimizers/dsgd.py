@@ -9,10 +9,6 @@ class DSGD:
         self.conf = conf
         self.device = device
 
-        # Compute consensus weight matrix
-        self.W = graph_generation.get_metropolis(ddl_problem.graph)
-        self.W = self.W.to(self.device)
-
         # Get list of all model parameter pointers
         self.plists = {
             i: list(self.pr.models[i].parameters()) for i in range(self.pr.N)
@@ -33,6 +29,8 @@ class DSGD:
             if k % eval_every == 0 or k == oits - 1:
                 self.pr.evaluate_metrics()
 
+            W = graph_generation.get_metropolis(self.pr.graph)
+            W = W.to(self.device)
             alph = alph * (1 - self.mu * alph)
 
             # Iterate over the agents for communication step
@@ -42,12 +40,10 @@ class DSGD:
                     # Update each parameter individually across all neighbors
                     for p in range(self.num_params):
                         # Ego update
-                        self.plists[i][p].multiply_(self.W[i, i])
+                        self.plists[i][p].multiply_(W[i, i])
                         # Neighbor updates
                         for j in neighs:
-                            self.plists[i][p].add_(
-                                self.W[i, j] * self.plists[j][p]
-                            )
+                            self.plists[i][p].add_(W[i, j] * self.plists[j][p])
 
             # Compute the batch loss and update using the gradients
             for i in range(self.pr.N):

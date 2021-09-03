@@ -124,7 +124,7 @@ class DistMNISTProblem:
             acc = correct / len(self.val_loader.dataset)
             return avg_loss, acc
 
-    def evaluate_metrics(self):
+    def evaluate_metrics(self, at_end=False):
         """Evaluate models, and then append values to the metric lists."""
 
         # Compute validation loss and accuracy (if you do one you might

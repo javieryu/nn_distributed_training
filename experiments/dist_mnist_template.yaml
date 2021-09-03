@@ -25,10 +25,9 @@ experiment:
     verbose: true
 problem_configs:
   problem1:
-    problem_name: "vanilla_cadmm"
+    problem_name: "cadmm"
     train_batch_size: 64
     val_batch_size: 128
-    evaluate_frequency: 20
     verbose_evals: true
     metrics:
       - "forward_pass_count"
@@ -36,12 +35,35 @@ problem_configs:
       - "consensus_error"
       - "top1_accuracy"
       - "current_epoch"
+    metrics_config:
+      evaluate_frequency: 20
     optimizer_config:
       alg_name: "cadmm"
       rho_init: 1.0
-      rho_scaling: 1.0
-      outer_iterations: 30
+      rho_scaling: 1.0003
+      outer_iterations: 50
       primal_iterations: 5
       primal_optimizer: "adam"
-      primal_lr: 0.005
+      persistant_primal_opt: false
+      primal_lr_start: 0.005
+      primal_lr_finish: 0.001
+      lr_decay_type: "log"
+      profile: false
+  problem2:
+    problem_name: "dsgt"
+    train_batch_size: 64
+    val_batch_size: 128
+    verbose_evals: true
+    metrics:
+      - "forward_pass_count"
+      - "validation_loss"
+      - "consensus_error"
+      - "top1_accuracy"
+      - "current_epoch"
+    metrics_config:
+      evaluate_frequency: 20
+    optimizer_config:
+      alg_name: "dsgt"
+      outer_iterations: 500
+      alpha: 0.01
       profile: false
