@@ -13,7 +13,7 @@ class DSGTPPO:
         self.plists_actor = {
             i: list(self.pr.actors[i].parameters()) for i in range(self.pr.N)
         }
-        self.num_params_actor = len(self.plists[0])
+        self.num_params_actor = len(self.plists_actor[0])
         base_zeros_actor = [
             torch.zeros_like(p, requires_grad=False, device=self.device)
             for p in self.plists_actor[0]
@@ -30,7 +30,7 @@ class DSGTPPO:
             i: list(self.pr.critics[i].parameters()) for i in range(self.pr.N)
         }
         # Useful numbers
-        self.num_params_critic = len(self.plists[0])
+        self.num_params_critic = len(self.plists_critic[0])
         base_zeros_critic = [
             torch.zeros_like(p, requires_grad=False, device=self.device)
             for p in self.plists_critic[0]
@@ -50,7 +50,7 @@ class DSGTPPO:
         max_rl_timesteps = self.conf["max_rl_timesteps"]
 
         # Comm weights
-        W = graph_generation.get_metropolis(ddl_problem.graph)
+        W = graph_generation.get_metropolis(self.pr.graph)
         W = W.to(self.device)
 
         # Initialize Ylists and Glists
@@ -166,6 +166,7 @@ class DSGTPPO:
                         )
                         self.plists_critic[i][p].grad.zero_()
 
+            self.pr._log_summary()
             if profiler is not None:
                 profiler.step()
         return
