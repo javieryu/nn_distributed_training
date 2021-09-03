@@ -86,85 +86,86 @@ class DSGTPPO:
         while self.pr.logger["t_so_far"] < max_rl_timesteps:
             # Compute graph weights
             # Iterate over the agents for communication step
-            for i in range(self.pr.N):
-                neighs = list(self.pr.graph.neighbors(i))
-                with torch.no_grad():
-                    # Update each parameter individually across all neighbors
-                    for p in range(self.num_params_actor):
-                        # Ego update
-                        self.plists_actor[i][p].multiply_(W[i, i])
-                        self.plists_actor[i][p].add_(
-                            -self.alpha * self.ylists_actor[i][p]
-                        )
-                        # Neighbor updates
-                        for j in neighs:
-                            self.plists_actor[i][p].add_(
-                                W[i, j] * self.plists_actor[j][p]
-                            )
-                    for p in range(self.num_params_critic):
-                        # Ego update
-                        self.plists_critic[i][p].multiply_(W[i, i])
-                        self.plists_critic[i][p].add_(
-                            -self.alpha * self.ylists_critic[i][p]
-                        )
-                        # Neighbor updates
-                        for j in neighs:
-                            self.plists_critic[i][p].add_(
-                                W[i, j] * self.plists_critic[j][p]
-                            )
-
             self.pr.split_rollout_marl()
             self.pr.update_advantage()
-            # Compute the batch loss and update using the gradients
-            for i in range(self.pr.N):
-                neighs = list(self.pr.graph.neighbors(i))
+            for _ in range(self.conf["n_updates_per_iteration"]):
+                for i in range(self.pr.N):
+                    neighs = list(self.pr.graph.neighbors(i))
+                    with torch.no_grad():
+                        # Update each parameter individually across all neighbors
+                        for p in range(self.num_params_actor):
+                            # Ego update
+                            self.plists_actor[i][p].multiply_(W[i, i])
+                            self.plists_actor[i][p].add_(
+                                -self.alpha * self.ylists_actor[i][p]
+                            )
+                            # Neighbor updates
+                            for j in neighs:
+                                self.plists_actor[i][p].add_(
+                                    W[i, j] * self.plists_actor[j][p]
+                                )
+                        for p in range(self.num_params_critic):
+                            # Ego update
+                            self.plists_critic[i][p].multiply_(W[i, i])
+                            self.plists_critic[i][p].add_(
+                                -self.alpha * self.ylists_critic[i][p]
+                            )
+                            # Neighbor updates
+                            for j in neighs:
+                                self.plists_critic[i][p].add_(
+                                    W[i, j] * self.plists_critic[j][p]
+                                )
 
-                # Compute PPO losses
-                actor_loss, critic_loss = self.pr.ev_ppo_loss(i)
+                # Compute the batch loss and update using the gradients
+                for i in range(self.pr.N):
+                    neighs = list(self.pr.graph.neighbors(i))
 
-                actor_loss.backward(retain_graph=True)
-                # Locally update model with gradient
-                with torch.no_grad():
-                    for p in range(self.num_params_actor):
-                        self.ylists_actor[i][p].multiply_(W[i, i])
-                        for j in neighs:
+                    # Compute PPO losses
+                    actor_loss, critic_loss = self.pr.ev_ppo_loss(i)
+
+                    actor_loss.backward(retain_graph=True)
+                    # Locally update model with gradient
+                    with torch.no_grad():
+                        for p in range(self.num_params_actor):
+                            self.ylists_actor[i][p].multiply_(W[i, i])
+                            for j in neighs:
+                                self.ylists_actor[i][p].add_(
+                                    W[i, j] * self.ylists_actor[j][p]
+                                )
+
                             self.ylists_actor[i][p].add_(
-                                W[i, j] * self.ylists_actor[j][p]
+                                self.plists_actor[i][p].grad
+                            )
+                            self.ylists_actor[i][p].add_(
+                                -1.0 * self.glists_actor[i][p]
                             )
 
-                        self.ylists_actor[i][p].add_(
-                            self.plists_actor[i][p].grad
-                        )
-                        self.ylists_actor[i][p].add_(
-                            -1.0 * self.glists_actor[i][p]
-                        )
+                            self.glists_actor[i][p] = (
+                                self.plists_actor[i][p].grad.detach().clone()
+                            )
+                            self.plists_actor[i][p].grad.zero_()
 
-                        self.glists_actor[i][p] = (
-                            self.plists_actor[i][p].grad.detach().clone()
-                        )
-                        self.plists_actor[i][p].grad.zero_()
+                    critic_loss.backward()
+                    # Locally update model with gradient
+                    with torch.no_grad():
+                        for p in range(self.num_params_critic):
+                            self.ylists_critic[i][p].multiply_(W[i, i])
+                            for j in neighs:
+                                self.ylists_critic[i][p].add_(
+                                    W[i, j] * self.ylists_critic[j][p]
+                                )
 
-                critic_loss.backward()
-                # Locally update model with gradient
-                with torch.no_grad():
-                    for p in range(self.num_params_critic):
-                        self.ylists_critic[i][p].multiply_(W[i, i])
-                        for j in neighs:
                             self.ylists_critic[i][p].add_(
-                                W[i, j] * self.ylists_critic[j][p]
+                                self.plists_critic[i][p].grad
+                            )
+                            self.ylists_critic[i][p].add_(
+                                -1.0 * self.glists_critic[i][p]
                             )
 
-                        self.ylists_critic[i][p].add_(
-                            self.plists_critic[i][p].grad
-                        )
-                        self.ylists_critic[i][p].add_(
-                            -1.0 * self.glists_critic[i][p]
-                        )
-
-                        self.glists_critic[i][p] = (
-                            self.plists_critic[i][p].grad.detach().clone()
-                        )
-                        self.plists_critic[i][p].grad.zero_()
+                            self.glists_critic[i][p] = (
+                                self.plists_critic[i][p].grad.detach().clone()
+                            )
+                            self.plists_critic[i][p].grad.zero_()
 
             self.pr._log_summary()
             if profiler is not None:

@@ -51,10 +51,16 @@ def main():
         "max_rl_timesteps": 5_000_000,
         "outer_iterations": 5_000_000,
     }
-    dsgt_confs = {"max_rl_timesteps": 5_000_000, "alpha": 0.001}
+    dsgt_confs = {
+        "max_rl_timesteps": 5_000_000,
+        "n_updates_per_iteration": hyperparameters["n_updates_per_iteration"],
+        "alpha": 1e-3,
+    }
     device = torch.device("cpu")
 
+    # print("running cadmm")
     # dopt = cadmmPPO.CADMMPPO(dppo, device, cadmm_confs)
+    print("running dsgt")
     dopt = dsgtPPO.DSGTPPO(dppo, device, dsgt_confs)
     dopt.train()
 

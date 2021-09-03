@@ -76,7 +76,6 @@ class DistPPOProblem:
             "actor_losses": [],  # losses of actor network in current iteration
         }
 
-    
     def heuristic(self, obs):
         """
         Get action such that evader moves opposite closest adversary and doesn't move past boundary.
@@ -150,6 +149,8 @@ class DistPPOProblem:
         actor_loss = (-torch.min(surr1, surr2)).mean()
         critic_loss = nn.MSELoss()(V, self.curr_rtgs[i])
 
+        # print(actor_loss)
+
         self.logger["actor_losses"].append(actor_loss.detach())
 
         return actor_loss, critic_loss
@@ -192,7 +193,6 @@ class DistPPOProblem:
         batch_rtgs = {i: [] for i in range(self.N)}
         batch_lens = []
         joint_batch_rews = []
-        
 
         t = 0  # Keeps track of how many timesteps we've run so far this batch
 
@@ -372,7 +372,18 @@ class DistPPOProblem:
         # Calculate the log probabilities of batch actions using most recent actor network.
         # This segment of code is similar to that in get_action()
         mean = self.actors[i](self.curr_obs[i])
-        dist = MultivariateNormal(mean, self.cov_mat)
+        #        print(
+        #            torch.norm(
+        #                torch.nn.utils.parameters_to_vector(
+        #                    self.actors[i].parameters()
+        #                )
+        #            )
+        #        )
+        try:
+            dist = MultivariateNormal(mean, self.cov_mat)
+        except ValueError:
+            # print(mean)
+            raise NameError("actor returning something weird")
         log_probs = dist.log_prob(self.curr_acts[i])
 
         # Return the value vector V of each observation in the batch
