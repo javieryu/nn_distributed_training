@@ -1,6 +1,7 @@
 import torch
 import model
 import cadmmPPO
+import dsgtPPO
 from dist_ppo import DistPPOProblem
 import gym
 import sys
@@ -39,7 +40,7 @@ def main():
     dppo = DistPPOProblem(
         base_actor, base_critic, graph, env, **hyperparameters
     )
-    opt_confs = {
+    cadmm_confs = {
         "rho_init": 1.0,
         "rho_scaling": 1.0,
         "primal_lr_start": hyperparameters["lr"],
@@ -50,10 +51,11 @@ def main():
         "max_rl_timesteps": 5_000_000,
         "outer_iterations": 5_000_000,
     }
-
+    dsgt_confs = {"max_rl_timesteps": 5_000_000, "alpha": 0.001}
     device = torch.device("cpu")
 
-    dopt = cadmmPPO.CADMMPPO(dppo, device, opt_confs)
+    # dopt = cadmmPPO.CADMMPPO(dppo, device, cadmm_confs)
+    dopt = dsgtPPO.DSGTPPO(dppo, device, dsgt_confs)
     dopt.train()
 
 
