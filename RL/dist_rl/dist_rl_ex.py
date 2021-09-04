@@ -1,13 +1,17 @@
+import sys
+sys.path.insert(0, "../")
+
 import torch
 import model
 import cadmmPPO
-import dsgtPPO
+# import dsgtPPO
 from dist_ppo import DistPPOProblem
 import gym
 import sys
 import networkx as nx
 
-sys.path.insert(0, "../")
+
+
 from pettingzoo.mpe import simple_tag_v2
 
 
@@ -29,6 +33,7 @@ def main():
         "clip": 0.2,
         "render": False,
         "render_every_i": 1,
+        "save_freq": 10
     }
     env.reset()
     obs_dim = env.observation_spaces["adversary_0"].shape[0]
@@ -58,10 +63,11 @@ def main():
     }
     device = torch.device("cpu")
 
-    # print("running cadmm")
-    # dopt = cadmmPPO.CADMMPPO(dppo, device, cadmm_confs)
-    print("running dsgt")
-    dopt = dsgtPPO.DSGTPPO(dppo, device, dsgt_confs)
+    print("running cadmm")
+    dopt = cadmmPPO.CADMMPPO(dppo, device, cadmm_confs)
+    # print("running dsgt")
+    # dopt = dsgtPPO.DSGTPPO(dppo, device, dsgt_confs)
+
     dopt.train()
 
 
