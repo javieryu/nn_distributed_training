@@ -48,7 +48,7 @@ def get_metropolis(graph):
     for i in range(N):
         for j in range(N):
             if graph.has_edge(i, j) and i != j:
-                W[i, j] = 1.0 / (max(degs[i], degs[j]) + 1.0)
+                W[i, j] = 1.0 / (max(degs[i], degs[j]))
 
     for i in range(N):
         W[i, i] = 1.0 - torch.sum(W[i, :])
@@ -73,6 +73,8 @@ def euclidean_disk_graph(poses, radius):
     dist_mat = scipy.spatial.distance.pdist(poses, "euclidean")
     dist_mat = scipy.spatial.distance.squareform(dist_mat)
     adj_mat = dist_mat <= radius
+    for i in range(adj_mat.shape[0]):
+        adj_mat[i, i] = 0
     graph = nx.from_numpy_matrix(adj_mat)
 
     return graph, nx.is_connected(graph)

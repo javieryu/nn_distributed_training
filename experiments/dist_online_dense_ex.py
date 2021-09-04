@@ -97,6 +97,9 @@ def experiment(yaml_pth):
     # Seperate configuration groups
     exp_conf = conf_dict["experiment"]
 
+    # Set seed for reproducibility
+    torch.manual_seed(exp_conf["seed"])
+
     # Create the output directory
     output_metadir = exp_conf["output_metadir"]
     if not os.path.exists(output_metadir):

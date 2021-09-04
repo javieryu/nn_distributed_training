@@ -57,9 +57,10 @@ class DistOnlineDensityProblem:
         self.epoch_tracker = torch.zeros(self.N)
         self.forward_cnt = 0
 
+        self.dev_cpu = torch.device("cpu")
         if "train_loss_moving_average" in self.metrics:
             self.track_tloss = True
-            self.tloss_tracker = torch.zeros(self.N).to(device)
+            self.tloss_tracker = torch.zeros(self.N)
             self.tloss_decay = conf["metrics_config"]["tloss_decay"]
         else:
             self.track_tloss = False
@@ -117,17 +118,26 @@ class DistOnlineDensityProblem:
                 self.update_graph()
 
         yh = self.models[i].forward(locs.to(self.device))
+        if torch.isnan(yh).any():
+            print(
+                torch.norm(
+                    torch.nn.utils.parameters_to_vector(
+                        self.models[i].parameters()
+                    )
+                )
+            )
+            raise NameError("NaN again")
         batch_loss = self.base_loss(torch.squeeze(yh), dens.to(self.device))
 
         with torch.no_grad():
             if self.track_tloss:
                 if self.tloss_tracker[i] != 0.0:
                     self.tloss_tracker[i] *= 1 - self.tloss_decay
-                    self.tloss_tracker[i] += (
-                        self.tloss_decay * batch_loss.clone()
+                    self.tloss_tracker[i] += self.tloss_decay * batch_loss.to(
+                        self.dev_cpu
                     )
                 else:
-                    self.tloss_tracker[i] += batch_loss.clone()
+                    self.tloss_tracker[i] += batch_loss.to(self.dev_cpu)
 
         return batch_loss
 

@@ -3,6 +3,7 @@ experiment:
   output_metadir: "../results/"
   writeout: true
   use_cuda: true
+  seed: 0
   data:
     data_dir: "../floorplans/32_data/"
     waypoint_subdir: "tight_paths"
@@ -53,7 +54,7 @@ problem_configs:
       alg_name: "cadmm"
       rho_init: 0.1
       rho_scaling: 1.0006
-      outer_iterations: 40
+      outer_iterations: 4000
       primal_iterations: 5
       primal_optimizer: "adam"
       persistant_primal_opt: False
@@ -63,7 +64,7 @@ problem_configs:
       profile: false
   problem2:
     problem_name: "dsgt"
-    train_batch_size: 10000
+    train_batch_size: 20000
     val_batch_size: 10000
     comm_radius: 1500.0
     verbose_evals: True
@@ -78,9 +79,10 @@ problem_configs:
     metrics_config:
       evaluate_frequency: 20
       tloss_decay: 0.2
-      mesh_only_at_end: False
+      mesh_only_at_end: True
     optimizer_config:
       alg_name: "dsgt"
-      alpha: 0.000001
-      outer_iterations: 50
+      alpha: 0.001
+      outer_iterations: 4000
+      init_grads: True
       profile: false

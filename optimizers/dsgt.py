@@ -30,15 +30,20 @@ class DSGT:
         oits = self.conf["outer_iterations"]
 
         # Initialize Ylists and Glists
-        for i in range(self.pr.N):
-            bloss = self.pr.local_batch_loss(i)
-            bloss.backward()
+        if self.conf["init_grads"]:
+            for i in range(self.pr.N):
+                bloss = self.pr.local_batch_loss(i)
+                bloss.backward()
 
-            with torch.no_grad():
-                for p in range(self.num_params):
-                    self.ylists[i][p] = self.plists[i][p].grad.detach().clone()
-                    self.glists[i][p] = self.plists[i][p].grad.detach().clone()
-                    self.plists[i][p].grad.zero_()
+                with torch.no_grad():
+                    for p in range(self.num_params):
+                        self.ylists[i][p] = (
+                            self.plists[i][p].grad.detach().clone()
+                        )
+                        self.glists[i][p] = (
+                            self.plists[i][p].grad.detach().clone()
+                        )
+                        self.plists[i][p].grad.zero_()
 
         # Optimization loop
         for k in range(oits):
@@ -57,10 +62,17 @@ class DSGT:
                     for p in range(self.num_params):
                         # Ego update
                         self.plists[i][p].multiply_(W[i, i])
-                        self.plists[i][p].add_(-self.alpha * self.ylists[i][p])
+                        self.plists[i][p].add_(
+                            self.ylists[i][p], alpha=-self.alpha * W[i, i]
+                        )
                         # Neighbor updates
                         for j in neighs:
-                            self.plists[i][p].add_(W[i, j] * self.plists[j][p])
+                            self.plists[i][p].add_(
+                                self.plists[j][p], alpha=W[i, j]
+                            )
+                            self.plists[i][p].add_(
+                                self.ylists[j][p], alpha=-self.alpha * W[i, j]
+                            )
 
             # Compute the batch loss and update using the gradients
             for i in range(self.pr.N):
@@ -69,20 +81,34 @@ class DSGT:
                 bloss.backward()
 
                 neighs = list(self.pr.graph.neighbors(i))
+                # print("node", i, " neighs: ", neighs)
+                # print("node", i, " W: ", W[i, :])
                 # Locally update model with gradient
                 with torch.no_grad():
+                    sum_ynorm = 0.0
+                    sum_gnorm = 0.0
                     for p in range(self.num_params):
                         self.ylists[i][p].multiply_(W[i, i])
                         for j in neighs:
-                            self.ylists[i][p].add_(W[i, j] * self.ylists[j][p])
+                            self.ylists[i][p].add_(
+                                self.ylists[j][p], alpha=W[i, j]
+                            )
 
                         self.ylists[i][p].add_(self.plists[i][p].grad)
-                        self.ylists[i][p].add_(-1.0 * self.glists[i][p])
+                        self.ylists[i][p].add_(self.glists[i][p], alpha=-1.0)
 
-                        self.glists[i][p] = (
-                            self.plists[i][p].grad.detach().clone()
-                        )
+                        sum_ynorm += torch.norm(self.ylists[i][p]).item()
+
+                        self.glists[i][p] = self.plists[i][p].grad.clone()
                         self.plists[i][p].grad.zero_()
+
+                        sum_gnorm += torch.norm(self.glists[i][p]).item()
+
+                #    print(
+                #        "Node {} : ynorm {}, gnorm {}".format(
+                #            i, sum_ynorm, sum_gnorm
+                #        )
+                #    )
 
             if profiler is not None:
                 profiler.step()
