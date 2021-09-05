@@ -8,7 +8,7 @@ experiment:
   loss: "NLL"
   graph:
     num_nodes: 10
-    type: "random"
+    type: "cycle"
     p: 0.6
     gen_attempts: 10
   model:
@@ -50,7 +50,7 @@ problem_configs:
       lr_decay_type: "log"
       profile: false
   problem2:
-    problem_name: "cadmm"
+    problem_name: "cadmm_50i"
     train_batch_size: 64
     val_batch_size: 128
     verbose_evals: true
