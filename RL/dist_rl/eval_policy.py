@@ -70,7 +70,7 @@ def heuristic(env, obs):
 		action[3] = 0.0
 	return action
 
-def rollout_marl(actors, env, render):
+def rollout_marl(actors, env, render, state_log=False):
 	"""
 		Returns a generator to roll out each episode given a trained policy and
 		environment to test on. 
@@ -94,11 +94,18 @@ def rollout_marl(actors, env, render):
 		# Logging data
 		ep_len = 0            # episodic length
 		ep_ret = 0            # episodic return
+		positions = {'agent_0': np.zeros((200,2)),
+					 'adversary_0': np.zeros((200,2)),
+					 'adversary_1': np.zeros((200,2)),
+					 'adversary_2': np.zeros((200,2)),}
 
 		i = 0 # agent index
 		# Run an episode for a maximum of max_timesteps_per_episode timesteps			
 		for ep_t, agent in enumerate(env.agent_iter()):
 			obs, rew, done, _ = env.last() # get agent observation 
+
+			if i == 0:
+				positions['agent_0']
 
 			if agent == "agent_0": # the prey
 				# action = np.random.rand(5) if not done else None
@@ -129,6 +136,9 @@ def rollout_marl(actors, env, render):
 
 		# Track episodic length
 		ep_len = t
+
+		if state_log:
+			return positions
 
 		# returns episodic length and return in this iteration
 		yield ep_len, ep_ret
