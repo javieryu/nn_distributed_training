@@ -43,7 +43,8 @@ class DSGTPPO:
         }
 
         # Training hyper params
-        self.alpha = conf["alpha"]
+        self.alpha_actor = conf["alpha_actor"]
+        self.alpha_critic = conf["alpha_critic"]
 
     def train(self, profiler=None):
         # eval_every = self.pr.conf["metrics_config"]["evaluate_frequency"]
@@ -97,7 +98,7 @@ class DSGTPPO:
                             # Ego update
                             self.plists_actor[i][p].multiply_(W[i, i])
                             self.plists_actor[i][p].add_(
-                                -self.alpha * self.ylists_actor[i][p]
+                                -self.alpha_actor * self.ylists_actor[i][p]
                             )
                             # Neighbor updates
                             for j in neighs:
@@ -108,7 +109,7 @@ class DSGTPPO:
                             # Ego update
                             self.plists_critic[i][p].multiply_(W[i, i])
                             self.plists_critic[i][p].add_(
-                                -self.alpha * self.ylists_critic[i][p]
+                                -self.alpha_critic * self.ylists_critic[i][p]
                             )
                             # Neighbor updates
                             for j in neighs:
@@ -119,6 +120,7 @@ class DSGTPPO:
                 # Compute the batch loss and update using the gradients
                 for i in range(self.pr.N):
                     neighs = list(self.pr.graph.neighbors(i))
+                    # print(i, " neighs: ", neighs)
 
                     # Compute PPO losses
                     actor_loss, critic_loss = self.pr.ev_ppo_loss(i)
@@ -126,6 +128,8 @@ class DSGTPPO:
                     actor_loss.backward(retain_graph=True)
                     # Locally update model with gradient
                     with torch.no_grad():
+                        ysum = 0.0
+                        gsum = 0.0
                         for p in range(self.num_params_actor):
                             self.ylists_actor[i][p].multiply_(W[i, i])
                             for j in neighs:
@@ -146,8 +150,13 @@ class DSGTPPO:
                             self.plists_actor[i][p].grad.zero_()
 
                     critic_loss.backward()
+                    #                    torch.nn.utils.clip_grad_norm_(
+                    #                        self.pr.critics[i].parameters(), 1000.0
+                    #                    )
                     # Locally update model with gradient
                     with torch.no_grad():
+                        ysum = 0.0
+                        gsum = 0.0
                         for p in range(self.num_params_critic):
                             self.ylists_critic[i][p].multiply_(W[i, i])
                             for j in neighs:

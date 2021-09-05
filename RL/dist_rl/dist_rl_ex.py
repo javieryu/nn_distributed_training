@@ -2,6 +2,7 @@ import torch
 import model
 import cadmmPPO
 import dsgtPPO
+import dsgdPPO
 from dist_ppo import DistPPOProblem
 import gym
 import sys
@@ -53,8 +54,15 @@ def main():
     }
     dsgt_confs = {
         "max_rl_timesteps": 5_000_000,
+        "n_updates_per_iteration": 3,
+        "alpha_actor": 1e-2,
+        "alpha_critic": 1e-5,
+    }
+    dsgd_confs = {
+        "max_rl_timesteps": 5_000_000,
         "n_updates_per_iteration": hyperparameters["n_updates_per_iteration"],
-        "alpha": 1e-3,
+        "alpha0": 0.001,
+        "mu": 1e-3,
     }
     device = torch.device("cpu")
 
@@ -62,6 +70,8 @@ def main():
     # dopt = cadmmPPO.CADMMPPO(dppo, device, cadmm_confs)
     print("running dsgt")
     dopt = dsgtPPO.DSGTPPO(dppo, device, dsgt_confs)
+    # print("running dsgd")
+    # dopt = dsgdPPO.DSGDPPO(dppo, device, dsgd_confs)
     dopt.train()
 
 
