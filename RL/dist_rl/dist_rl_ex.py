@@ -10,8 +10,6 @@ import gym
 import sys
 import networkx as nx
 
-
-
 from pettingzoo.mpe import simple_tag_v2
 
 
