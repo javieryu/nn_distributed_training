@@ -21,6 +21,9 @@ rewards3 = np.load('dist_rl/trained/avg_ep_rews_3.npy')
 rewards4 = np.load('dist_rl/trained/avg_ep_rews_4.npy')
 rewards_arr_cadmm = np.vstack((rewards1, rewards2, rewards3, rewards4))
 
+times_long_cadmm = np.load('dist_rl/trained/timesteps_long.npy')
+rewards_long_cadmm = np.load('dist_rl/trained/avg_ep_rews_long.npy')
+
 # Load DSGT
 
 
@@ -44,8 +47,12 @@ ax0.fill_between(times_cent, np.amax(rewards_arr_cent, axis=0), np.amin(rewards_
 ax0.plot(times_cadmm, np.mean(rewards_arr_cadmm, axis=0), c=cadmm_color, label="CADMM")
 ax0.fill_between(times_cadmm, np.amax(rewards_arr_cadmm, axis=0), np.amin(rewards_arr_cadmm, axis=0), color=cadmm_color, alpha=0.5)
 
-# Long
-ax0.plot(times_long, rewards_long, c=cent_color, label="Long")
+# Long Centralized
+ax0.plot(times_long, rewards_long, c=cent_color, label="Long Centralized")
+
+# Long CADMM
+ax0.plot(times_long_cadmm, rewards_long_cadmm, c=cadmm_color, label="Long CADMM")
+
 
 
 # DSGT

@@ -94,20 +94,19 @@ def rollout_marl(actors, env, render, state_log=False):
 		# Logging data
 		ep_len = 0            # episodic length
 		ep_ret = 0            # episodic return
-		positions = {'agent_0': np.zeros((200,2)),
-					 'adversary_0': np.zeros((200,2)),
-					 'adversary_1': np.zeros((200,2)),
-					 'adversary_2': np.zeros((200,2)),}
+		positions = {'agent_0': np.zeros((1,2)),
+					 'adversary_0': np.zeros((1,2)),
+					 'adversary_1': np.zeros((1,2)),
+					 'adversary_2': np.zeros((1,2)),}
 
 		i = 0 # agent index
+		j = 0 # position index
 		# Run an episode for a maximum of max_timesteps_per_episode timesteps			
 		for ep_t, agent in enumerate(env.agent_iter()):
 			obs, rew, done, _ = env.last() # get agent observation 
 
-			if i == 0:
-				positions['agent_0']
-
 			if agent == "agent_0": # the prey
+				positions['agent_0'] = np.vstack((positions['agent_0'], [obs[2:4]]))
 				# action = np.random.rand(5) if not done else None
 				action = heuristic(env, obs)
 				env.step(action)
@@ -115,6 +114,14 @@ def rollout_marl(actors, env, render, state_log=False):
 				
 			else: # predators
 				t += 1 # Increment timesteps ran this batch so far
+
+				if agent == "adversary_0":
+					positions['adversary_0'] = np.vstack((positions['adversary_0'], [obs[2:4]]))
+				elif agent == "adversary_1":
+					positions['adversary_1'] = np.vstack((positions['adversary_1'], [obs[2:4]]))
+				elif agent == "adversary_2":
+					positions['adversary_2'] = np.vstack((positions['adversary_2'], [obs[2:4]]))
+
 
 				# Calculate action and make a step in the env.
 				if not done:
@@ -136,12 +143,15 @@ def rollout_marl(actors, env, render, state_log=False):
 
 		# Track episodic length
 		ep_len = t
-
 		if state_log:
+			positions['agent_0'] = positions['agent_0'][1:,:]
+			positions['adversary_0'] = positions['adversary_0'][1:,:]
+			positions['adversary_1'] = positions['adversary_1'][1:,:]
+			positions['adversary_2'] = positions['adversary_2'][1:,:]
 			return positions
 
 		# returns episodic length and return in this iteration
-		yield ep_len, ep_ret
+		# yield ep_len, ep_ret
 
 
 
@@ -169,7 +179,7 @@ actor0 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
 actor1 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
 actor2 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
 
-actor_models = torch.load('./trained/ppo_actors_tag.pth')
+actor_models = torch.load('./trained/ppo_actors_tag_long.pth')
 actor0.load_state_dict(actor_models['actor0'])
 actor1.load_state_dict(actor_models['actor1'])
 actor2.load_state_dict(actor_models['actor2'])
@@ -178,7 +188,66 @@ actors = {0: actor0, 1: actor1, 2: actor2}
 
 render = True
 
-# Rollout with the policy and environment, and log each episode's data
-for ep_num, (ep_len, ep_ret) in enumerate(rollout_marl(actors, env, render)):
-	_log_summary(ep_len=ep_len, ep_ret=ep_ret, ep_num=ep_num)
+# # Rollout with the policy and environment, and log each episode's data
+# for ep_num, (ep_len, ep_ret) in enumerate(rollout_marl(actors, env, render)):
+# 	_log_summary(ep_len=ep_len, ep_ret=ep_ret, ep_num=ep_num)
 
+
+
+positions = rollout_marl(actors, env, render, state_log=True)
+positions['obstacles'] = np.array([[-1.2, -0.6], [0.1, -1.1], [-0.3, 0.4], [0.9, 0.75],
+					   [-0.9, 1.2], [-0.1, 1.3], [-1.2, 0.0], [1.3, 0.0]])
+np.save('trained/positions.npy', positions)
+
+
+import scipy.interpolate as interp
+
+
+# plot things
+import matplotlib.pyplot as plt
+def interpolate(x, y, res):
+	x, y = x, y  ##self.poly.xy[:].T
+	i = np.arange(len(x))
+
+	interp_i = np.linspace(0, i.max(), res * i.max())
+
+	xi = interp.interp1d(i, x, kind="cubic")(interp_i)
+	yi = interp.interp1d(i, y, kind="cubic")(interp_i)
+
+	return xi, yi
+
+
+
+
+plt.rcParams.update({'font.size': 16})
+(fig, ax0) = plt.subplots(figsize=(10, 8), tight_layout=True)
+t_steps = min(positions['agent_0'].shape[0], positions['adversary_0'].shape[0], positions['adversary_1'].shape[0], positions['adversary_2'].shape[0])
+
+# add landmarks
+for i in range(positions['obstacles'].shape[0]):
+	plt.gca().add_patch(plt.Circle((positions['obstacles'][i,:]), 0.2, fc=[0.25, 0.25, 0.25]))
+
+mod = 4
+# add smooth trajectories
+xspline, yspline = interpolate(positions['agent_0'][0:t_steps-mod + 2,0], positions['agent_0'][0:t_steps-mod + 2,1], 120)
+plt.plot(xspline, yspline, color=[0.35, 0.85, 0.35], alpha=0.5)
+xspline, yspline = interpolate(positions['adversary_0'][0:t_steps-mod + 2,0], positions['adversary_0'][0:t_steps-mod + 2,1], 120)
+plt.plot(xspline, yspline, color=[0.85, 0.35, 0.35], alpha=0.5)
+xspline, yspline = interpolate(positions['adversary_1'][0:t_steps-mod + 2,0], positions['adversary_1'][0:t_steps-mod + 2,1], 120)
+plt.plot(xspline, yspline, color=[0.85, 0.35, 0.35], alpha=0.5)
+xspline, yspline = interpolate(positions['adversary_2'][0:t_steps-mod + 2,0], positions['adversary_2'][0:t_steps-mod + 2,1], 120)
+plt.plot(xspline, yspline, color=[0.85, 0.35, 0.35], alpha=0.5)
+
+opacities = np.linspace(0, 1, num=t_steps)
+# add agent and adversaries
+for i in range(t_steps):
+	if i % mod == 0:
+		plt.gca().add_patch(plt.Circle((positions['agent_0'][i,:]),      0.05, fc=[0.35, 0.85, 0.35], alpha=opacities[i]) )
+		plt.gca().add_patch(plt.Circle((positions['adversary_0'][i,:]), 0.075, fc=[0.85, 0.35, 0.35], alpha=opacities[i]) )
+		plt.gca().add_patch(plt.Circle((positions['adversary_1'][i,:]), 0.075, fc=[0.85, 0.35, 0.35], alpha=opacities[i]) )
+		plt.gca().add_patch(plt.Circle((positions['adversary_2'][i,:]), 0.075, fc=[0.85, 0.35, 0.35], alpha=opacities[i]) )
+
+
+plt.axis('scaled')
+plt.show()
+fig.savefig("ghost_traj.svg")
