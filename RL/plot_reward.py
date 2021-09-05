@@ -1,32 +1,63 @@
 import numpy as np
 import matplotlib.pyplot as plt
-plt.style.use("dark_background")
+plt.rcParams.update({'font.size': 16})
 
-
-times1 = np.load('trained/timesteps_1.npy')
+# Load Centralized
+times_cent = np.load('trained/timesteps_2.npy')
 rewards1 = np.load('trained/avg_ep_rews_1.npy')
-
-times2 = np.load('trained/timesteps_2.npy')
 rewards2 = np.load('trained/avg_ep_rews_2.npy')
-
-times3 = np.load('trained/timesteps_3.npy')
 rewards3 = np.load('trained/avg_ep_rews_3.npy')
-
-times4 = np.load('trained/timesteps_4.npy')
 rewards4 = np.load('trained/avg_ep_rews_4.npy')
+rewards_arr_cent = np.vstack((rewards1, rewards2, rewards3, rewards4))
 
-rewards_arr = np.vstack((rewards1, rewards2, rewards3, rewards4))
+times_long = np.hstack((times_cent, times_cent[-1] + np.load('trained/timesteps_4_2.npy')))
+rewards_long = np.hstack((rewards4, np.load('trained/avg_ep_rews_4_2.npy')))
+
+# Load CADMM
+times_cadmm = np.load('dist_rl/trained/timesteps_1.npy')
+rewards1 = np.load('dist_rl/trained/avg_ep_rews_1.npy')
+rewards2 = np.load('dist_rl/trained/avg_ep_rews_2.npy')
+rewards3 = np.load('dist_rl/trained/avg_ep_rews_3.npy')
+rewards4 = np.load('dist_rl/trained/avg_ep_rews_4.npy')
+rewards_arr_cadmm = np.vstack((rewards1, rewards2, rewards3, rewards4))
+
+# Load DSGT
 
 
+# Load DSGD
 
 
-fig, ax0 = plt.subplots(figsize=(20, 8))
-ax0.plot(times4, np.mean(rewards_arr, axis=0), c="indianred")
-ax0.fill_between(times4, np.amax(rewards_arr, axis=0), np.amin(rewards_arr, axis=0), color="indianred", alpha=0.5)
-ax0.set_title("RL Training Over Time")
+# Construct Plot
+(fig, ax0) = plt.subplots(figsize=(10, 8), tight_layout=True)
+
+cadmm_color="darkorange"
+dsgt_color="limegreen"
+dsgd_color="purple"
+cent_color="indigo"
+solo_color="cornflowerblue"
+
+# Centralized
+ax0.plot(times_cent, np.mean(rewards_arr_cent, axis=0), c=cent_color, label="Centralized")
+ax0.fill_between(times_cent, np.amax(rewards_arr_cent, axis=0), np.amin(rewards_arr_cent, axis=0), color=cent_color, alpha=0.5)
+
+# CADMM
+ax0.plot(times_cadmm, np.mean(rewards_arr_cadmm, axis=0), c=cadmm_color, label="CADMM")
+ax0.fill_between(times_cadmm, np.amax(rewards_arr_cadmm, axis=0), np.amin(rewards_arr_cadmm, axis=0), color=cadmm_color, alpha=0.5)
+
+# Long
+ax0.plot(times_long, rewards_long, c=cent_color, label="Long")
+
+
+# DSGT
+
+# DSGD
+
+
+ax0.legend()
 ax0.set_xlabel("Timestep")
 ax0.set_ylabel("Average Episode Reward")
-
+ax0.grid(zorder=0)
 plt.show()
 
+fig.savefig("RL_reward.svg")
 

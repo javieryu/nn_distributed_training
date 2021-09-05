@@ -1,5 +1,6 @@
 import torch
 import math
+import numpy as np
 
 
 class CADMMPPO:
@@ -132,9 +133,10 @@ class CADMMPPO:
 
     def train(self, profiler=None):
         # eval_every = self.pr.conf["metrics_config"]["evaluate_frequency"]
-        max_rl_timesteps = self.conf["max_rl_timesteps"]
         k = 0
-        while self.pr.logger["t_so_far"] < max_rl_timesteps:
+        avg_ep_rews = []
+        timesteps = []
+        while self.pr.logger["t_so_far"] < self.conf["max_rl_timesteps"]:
             self.pr.split_rollout_marl()
             self.pr.update_advantage()
 
@@ -177,10 +179,27 @@ class CADMMPPO:
 
                 self.primal_update(i, th_reg_actor, th_reg_critic, k)
 
+            avg_ep_rews.append(np.mean([np.sum(ep_rews) for ep_rews in self.pr.logger['batch_rews']]))
+            timesteps.append(self.pr.logger["t_so_far"])
             self.pr._log_summary()
 
             if profiler is not None:
                 profiler.step()
+
+            # Save our model if it's time
+            if k % self.pr.save_freq == 0:
+                # marl
+                # predator-prey
+                torch.save({'actor0': self.pr.actors[0].state_dict(), 
+                            'actor1': self.pr.actors[1].state_dict(),
+                            'actor2': self.pr.actors[2].state_dict()},'./trained/ppo_actors_tag.pth')
+                torch.save({'critic0': self.pr.critics[0].state_dict(), 
+                            'critic1': self.pr.critics[1].state_dict(),
+                            'critic2': self.pr.critics[2].state_dict()},'./trained/ppo_critics_tag.pth')
+
+                # save plotting data
+                np.save('./trained/avg_ep_rews.npy', np.asarray(avg_ep_rews))
+                np.save('./trained/timesteps.npy', np.asarray(timesteps))
 
             k += 1
 

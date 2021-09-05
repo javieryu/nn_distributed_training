@@ -1,3 +1,7 @@
+import sys
+
+sys.path.insert(0, "../")
+
 import torch
 import model
 import cadmmPPO
@@ -8,7 +12,6 @@ import gym
 import sys
 import networkx as nx
 
-sys.path.insert(0, "../")
 from pettingzoo.mpe import simple_tag_v2
 
 
@@ -30,6 +33,7 @@ def main():
         "clip": 0.2,
         "render": False,
         "render_every_i": 1,
+        "save_freq": 10,
     }
     env.reset()
     obs_dim = env.observation_spaces["adversary_0"].shape[0]
@@ -49,11 +53,11 @@ def main():
         "lr_decay_type": "constant",
         "persistant_primal_opt": False,
         "primal_iterations": hyperparameters["n_updates_per_iteration"],
-        "max_rl_timesteps": 5_000_000,
-        "outer_iterations": 5_000_000,
+        "max_rl_timesteps": 10_000_000,
+        "outer_iterations": 10_000_000,
     }
     dsgt_confs = {
-        "max_rl_timesteps": 5_000_000,
+        "max_rl_timesteps": 10_000_000,
         "n_updates_per_iteration": 3,
         "alpha_actor": 1e-2,
         "alpha_critic": 1e-5,
