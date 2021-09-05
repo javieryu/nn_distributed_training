@@ -27,7 +27,7 @@ class DSGD:
         alph = self.alph0
         for k in range(oits):
             if k % eval_every == 0 or k == oits - 1:
-                self.pr.evaluate_metrics()
+                self.pr.evaluate_metrics(at_end=(k == oits - 1))
 
             W = graph_generation.get_metropolis(self.pr.graph)
             W = W.to(self.device)

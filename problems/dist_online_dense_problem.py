@@ -160,6 +160,14 @@ class DistOnlineDensityProblem:
         file_name = self.conf["problem_name"] + "_results.pt"
         file_path = os.path.join(output_dir, file_name)
         torch.save(self.metrics, file_path)
+
+        if self.conf["save_models"]:
+            state_dicts = {
+                i: self.models[i].state_dict() for i in range(self.N)
+            }
+            file_name = self.conf["problem_name"] + "_models.pt"
+            file_path = os.path.join(output_dir, file_name)
+            torch.save(state_dicts, file_path)
         return
 
     def validate(self, i):
@@ -216,12 +224,14 @@ class DistOnlineDensityProblem:
                     # Normalize the stack
                     th_stack = torch.nn.functional.normalize(th_stack, dim=1)
                     # Compute row-wise distances
-                    distances = torch.cdist(th_stack, th_stack)
-                    davg = distances.sum(axis=1) / self.N
+                    distances_all = torch.cdist(th_stack, th_stack)
+                    th_mean = torch.mean(th_stack, dim=0).reshape(1, -1)
+                    distances_mean = torch.cdist(th_stack, th_mean)
                 # append metrics and generate print string
-                self.metrics[met_name].append(distances)
+                self.metrics[met_name].append((distances_all, distances_mean))
                 evalprint += "Consensus: {:.4f} - {:.4f} | ".format(
-                    torch.amin(davg).item(), torch.amax(davg).item()
+                    torch.amin(distances_mean).item(),
+                    torch.amax(distances_mean).item(),
                 )
             elif met_name == "validation_loss":
                 # Average node loss on the validation dataset

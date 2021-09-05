@@ -1,8 +1,8 @@
 experiment:
   name: "dist_online_dense_v1"
   output_metadir: "../results/"
-  writeout: true
-  use_cuda: true
+  writeout: True
+  use_cuda: True
   seed: 0
   data:
     data_dir: "../floorplans/32_data/"
@@ -24,11 +24,11 @@ experiment:
     shape: [2, 256, 64, 64, 64, 1]
     scale: 0.05
   individual_training:
-    train_solo: false
+    train_solo: True
     optimizer: "adam"
     lr: 0.001
     epochs: 1
-    train_batch_size: 8000
+    train_batch_size: 10000
     val_batch_size: 10000
     verbose: True
 problem_configs:
@@ -39,6 +39,7 @@ problem_configs:
     comm_radius: 1500.0
     verbose_evals: True
     dynamic_graph: True
+    save_models: True
     metrics:
       - "forward_pass_count"
       - "train_loss_moving_average"
@@ -59,7 +60,7 @@ problem_configs:
       primal_optimizer: "adam"
       persistant_primal_opt: False
       primal_lr_start: 0.001
-      primal_lr_finish: 0.0005
+      primal_lr_finish: 0.0001
       lr_decay_type: "log"
       profile: false
   problem2:
@@ -69,6 +70,7 @@ problem_configs:
     comm_radius: 1500.0
     verbose_evals: True
     dynamic_graph: True
+    save_models: True
     metrics:
       - "forward_pass_count"
       - "train_loss_moving_average"

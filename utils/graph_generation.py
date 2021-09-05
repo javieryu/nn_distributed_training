@@ -18,6 +18,8 @@ def generate_from_conf(graph_conf):
     N = graph_conf["num_nodes"]
     if graph_conf["type"] == "wheel":
         graph = nx.wheel_graph(N)
+    elif graph_conf["type"] == "cycle":
+        graph = nx.cycle_graph(N)
     elif graph_conf["type"] == "random":
         # Attempt to make a random graph until it is connected
         graph = nx.erdos_renyi_graph(N, graph_conf["p"])

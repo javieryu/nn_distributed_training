@@ -48,7 +48,7 @@ class DSGT:
         # Optimization loop
         for k in range(oits):
             if k % eval_every == 0 or k == oits - 1:
-                self.pr.evaluate_metrics()
+                self.pr.evaluate_metrics(at_end=(k == oits - 1))
 
             # Compute graph weights
             W = graph_generation.get_metropolis(self.pr.graph)

@@ -1,0 +1,90 @@
+experiment:
+  name: "dist_online_dense_v1"
+  output_metadir: "../results/"
+  writeout: True
+  use_cuda: True
+  seed: 0
+  data:
+    data_dir: "../floorplans/32_data/"
+    waypoint_subdir: "tight_paths"
+    split_type: "trajectory"
+    num_scans_in_window: 400
+    num_beams: 20
+    beam_samps: 25
+    beam_length: 0.2
+    collision_samps: 50
+    fine_samps: 3
+    samp_distribution_factor: 1.0
+    border_width: 30
+    round_density: True
+    spline_res: 30
+    num_validation_scans: 500 
+  loss: "BCE"
+  model:
+    shape: [2, 256, 64, 64, 64, 1]
+    scale: 0.05
+  individual_training:
+    train_solo: True
+    optimizer: "adam"
+    lr: 0.001
+    epochs: 10
+    train_batch_size: 10000
+    val_batch_size: 10000
+    verbose: True
+problem_configs:
+  problem1:
+    problem_name: "cadmm_log"
+    train_batch_size: 10000
+    val_batch_size: 10000
+    comm_radius: 1500.0
+    verbose_evals: True
+    dynamic_graph: True
+    save_models: True
+    metrics:
+      - "forward_pass_count"
+      - "train_loss_moving_average"
+      - "validation_loss"
+      - "consensus_error"
+      - "mesh_grid_density"
+      - "current_epoch"
+    metrics_config:
+      evaluate_frequency: 20
+      tloss_decay: 0.2
+      mesh_only_at_end: True
+    optimizer_config:
+      alg_name: "cadmm"
+      rho_init: 0.1
+      rho_scaling: 1.0006
+      outer_iterations: 30
+      primal_iterations: 5
+      primal_optimizer: "adam"
+      persistant_primal_opt: False
+      primal_lr_start: 0.001
+      primal_lr_finish: 0.0001
+      lr_decay_type: "log"
+      profile: false
+  problem2:
+    problem_name: "dsgt"
+    train_batch_size: 20000
+    val_batch_size: 10000
+    comm_radius: 1500.0
+    verbose_evals: True
+    dynamic_graph: True
+    save_models: True
+    metrics:
+      - "forward_pass_count"
+      - "train_loss_moving_average"
+      - "validation_loss"
+      - "consensus_error"
+      - "mesh_grid_density"
+      - "current_epoch"
+    metrics_config:
+      evaluate_frequency: 20
+      tloss_decay: 0.2
+      mesh_only_at_end: True
+    optimizer_config:
+      alg_name: "dsgt"
+      alpha: 0.001
+      outer_iterations: 30
+      init_grads: True
+      profile: false
