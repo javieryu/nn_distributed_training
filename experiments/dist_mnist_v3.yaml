@@ -8,7 +8,7 @@ experiment:
   loss: "NLL"
   graph:
     num_nodes: 10
-    type: "random"
+    type: "cycle"
     p: 0.6
     gen_attempts: 10
   model:
@@ -16,7 +16,7 @@ experiment:
     kernel_size: 5
     linear_width: 64
   individual_training:
-    train_solo: True
+    train_solo: False
     optimizer: "adam"
     lr: 0.005
     epochs: 6
@@ -41,7 +41,7 @@ problem_configs:
       alg_name: "cadmm"
       rho_init: 0.5
       rho_scaling: 1.0003
-      outer_iterations: 1500
+      outer_iterations: 2000
       primal_iterations: 2
       primal_optimizer: "adam"
       persistant_primal_opt: false
@@ -64,7 +64,7 @@ problem_configs:
       evaluate_frequency: 20
     optimizer_config:
       alg_name: "dsgt"
-      outer_iterations: 1500
+      outer_iterations: 2000
       alpha: 0.005
       init_grads: True
       profile: false
@@ -83,7 +83,7 @@ problem_configs:
       evaluate_frequency: 20
     optimizer_config:
       alg_name: "dsgd"
-      outer_iterations: 1500
+      outer_iterations: 2000
       alpha0: 0.005
-      mu: 0.001
+      mu: 0.0
       profile: false
