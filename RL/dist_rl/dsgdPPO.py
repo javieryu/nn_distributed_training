@@ -38,6 +38,9 @@ class DSGDPPO:
 
         # Optimization loop
         alph = self.alph0
+        k = 0
+        avg_ep_rews = []
+        timesteps = []
         while self.pr.logger["t_so_far"] < max_rl_timesteps:
             self.pr.split_rollout_marl()
             self.pr.update_advantage()
@@ -88,7 +91,27 @@ class DSGDPPO:
                             )
                             self.plists_critic[i][p].grad.zero_()
 
+            avg_ep_rews.append(np.mean([np.sum(ep_rews) for ep_rews in self.pr.logger['batch_rews']]))
+            timesteps.append(self.pr.logger["t_so_far"])
             self.pr._log_summary()
+            
             if profiler is not None:
                 profiler.step()
+
+            # Save our model if it's time
+            if k % self.pr.save_freq == 0:
+                # marl
+                # predator-prey
+                torch.save({'actor0': self.pr.actors[0].state_dict(), 
+                            'actor1': self.pr.actors[1].state_dict(),
+                            'actor2': self.pr.actors[2].state_dict()},f'./trained/ppo_actors_tag_dsgd_{self.conf["ID"]}.pth')
+                torch.save({'critic0': self.pr.critics[0].state_dict(), 
+                            'critic1': self.pr.critics[1].state_dict(),
+                            'critic2': self.pr.critics[2].state_dict()},f'./trained/ppo_critics_tag_dsgd_{self.conf["ID"]}.pth')
+
+                # save plotting data
+                np.save(f'./trained/avg_ep_rews_dsgd_{self.conf["ID"]}.npy', np.asarray(avg_ep_rews))
+                np.save(f'./trained/timesteps_dsgd_{self.conf["ID"]}.npy', np.asarray(timesteps))
+
+            k += 1
         return
