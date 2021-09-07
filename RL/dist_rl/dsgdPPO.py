@@ -42,6 +42,9 @@ class DSGDPPO:
         k = 0
         avg_ep_rews = []
         timesteps = []
+        agree_0 = np.array([])
+        agree_1 = np.array([])
+        agree_2 = np.array([])
         while self.pr.logger["t_so_far"] < max_rl_timesteps:
             self.pr.split_rollout_marl()
             self.pr.update_advantage()
@@ -101,6 +104,26 @@ class DSGDPPO:
                 )
             )
             timesteps.append(self.pr.logger["t_so_far"])
+            # Compute and save agreements
+            with torch.no_grad():
+                # The average distance from a single node to all of the other nodes in the problem
+                actor_params = [torch.nn.utils.parameters_to_vector(self.pr.actors[i].parameters()) for i in range(self.pr.N)]
+                critic_params = [torch.nn.utils.parameters_to_vector(self.pr.critics[i].parameters()) for i in range(self.pr.N)]
+
+                # Stack all of the parameters into rows
+                th_stack_a = torch.stack(actor_params)
+                th_stack_c = torch.stack(critic_params)
+                th_stack = torch.hstack((th_stack_a, th_stack_c))
+
+                # Normalize the stack
+                th_stack = torch.nn.functional.normalize(th_stack, dim=1)
+                
+                # Compute row-wise distances
+                th_mean = torch.mean(th_stack, dim=0).reshape(1, -1)
+                distances_mean = torch.cdist(th_stack, th_mean)
+                agree_0 = np.append(agree_0, distances_mean[0].item())
+                agree_1 = np.append(agree_1, distances_mean[1].item())
+                agree_2 = np.append(agree_2, distances_mean[2].item())
             self.pr._log_summary()
 
             if profiler is not None:
@@ -136,6 +159,7 @@ class DSGDPPO:
                     f'./trained/timesteps_dsgd_{self.conf["ID"]}.npy',
                     np.asarray(timesteps),
                 )
+                np.savez(f'./trained/agreements_dsgd_{self.conf["ID"]}', agree_0=agree_0, agree_1=agree_1, agree_2=agree_2)
 
             k += 1
         return

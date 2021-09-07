@@ -71,10 +71,10 @@ def main():
     }
     device = torch.device("cpu")
 
-    # print("running cadmm")
-    # dopt = cadmmPPO.CADMMPPO(dppo, device, cadmm_confs)
-    print("running dsgt")
-    dopt = dsgtPPO.DSGTPPO(dppo, device, dsgt_confs)
+    print("running cadmm")
+    dopt = cadmmPPO.CADMMPPO(dppo, device, cadmm_confs)
+    # print("running dsgt")
+    # dopt = dsgtPPO.DSGTPPO(dppo, device, dsgt_confs)
     # print("running dsgd")
     # dopt = dsgdPPO.DSGDPPO(dppo, device, dsgd_confs)
     dopt.train()
