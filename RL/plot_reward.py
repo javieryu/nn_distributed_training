@@ -32,7 +32,13 @@ rewards4 = np.load('dist_rl/trained/avg_ep_rews_dsgt_4.npy')
 rewards_arr_dsgt = np.vstack((rewards0, rewards1, rewards2, rewards3, rewards4))
 
 # Load DSGD
-
+times_dsgd = np.load('dist_rl/trained/timesteps_dsgd_1.npy')
+rewards0 = np.load('dist_rl/trained/avg_ep_rews_dsgd_0.npy')
+rewards1 = np.load('dist_rl/trained/avg_ep_rews_dsgd_1.npy')
+rewards2 = np.load('dist_rl/trained/avg_ep_rews_dsgd_2.npy')
+rewards3 = np.load('dist_rl/trained/avg_ep_rews_dsgd_3.npy')
+rewards4 = np.load('dist_rl/trained/avg_ep_rews_dsgd_4.npy')
+rewards_arr_dsgd = np.vstack((rewards0, rewards1, rewards2, rewards3, rewards4))
 
 # Construct Plot
 (fig, ax0) = plt.subplots(figsize=(10, 8), tight_layout=True)
@@ -56,6 +62,8 @@ ax0.plot(times_dsgt, np.mean(rewards_arr_dsgt, axis=0), c=dsgt_color, label="DSG
 ax0.fill_between(times_dsgt, np.amax(rewards_arr_dsgt, axis=0), np.amin(rewards_arr_dsgt, axis=0), color=dsgt_color, alpha=0.5)
 
 # DSGD
+ax0.plot(times_dsgd, np.mean(rewards_arr_dsgd, axis=0), c=dsgd_color, label="DSGD")
+ax0.fill_between(times_dsgd, np.amax(rewards_arr_dsgd, axis=0), np.amin(rewards_arr_dsgd, axis=0), color=dsgd_color, alpha=0.5)
 
 
 ax0.legend()
