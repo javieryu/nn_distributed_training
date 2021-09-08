@@ -8,8 +8,8 @@ experiment:
   loss: "NLL"
   graph:
     num_nodes: 10
-    type: "cycle"
-    p: 0.6
+    type: "random"
+    p: 0.8
     gen_attempts: 10
   model:
     num_filters: 3
@@ -41,7 +41,7 @@ problem_configs:
       alg_name: "cadmm"
       rho_init: 0.5
       rho_scaling: 1.0
-      outer_iterations: 2000
+      outer_iterations: 900
       primal_iterations: 50
       primal_optimizer: "adam"
       persistant_primal_opt: false
@@ -50,57 +50,7 @@ problem_configs:
       lr_decay_type: "constant"
       profile: false
   problem2:
-    problem_name: "cadmm_approx"
-    train_batch_size: 64
-    val_batch_size: 128
-    verbose_evals: true
-    metrics:
-      - "forward_pass_count"
-      - "validation_loss"
-      - "consensus_error"
-      - "top1_accuracy"
-      - "current_epoch"
-    metrics_config:
-      evaluate_frequency: 20
-    optimizer_config:
-      alg_name: "cadmm"
-      rho_init: 0.5
-      rho_scaling: 1.0
-      outer_iterations: 2000
-      primal_iterations: 2
-      primal_optimizer: "adam"
-      persistant_primal_opt: false
-      primal_lr_start: 0.005
-      primal_lr_finish: 0.0005
-      lr_decay_type: "constant"
-      profile: false
-  problem3:
-    problem_name: "cadmm_approx_log"
-    train_batch_size: 64
-    val_batch_size: 128
-    verbose_evals: true
-    metrics:
-      - "forward_pass_count"
-      - "validation_loss"
-      - "consensus_error"
-      - "top1_accuracy"
-      - "current_epoch"
-    metrics_config:
-      evaluate_frequency: 20
-    optimizer_config:
-      alg_name: "cadmm"
-      rho_init: 0.5
-      rho_scaling: 1.0
-      outer_iterations: 2000
-      primal_iterations: 2
-      primal_optimizer: "adam"
-      persistant_primal_opt: false
-      primal_lr_start: 0.005
-      primal_lr_finish: 0.0005
-      lr_decay_type: "log"
-      profile: false
-  problem3:
-    problem_name: "cadmm_approx_log_rho"
+    problem_name: "dinno"
     train_batch_size: 64
     val_batch_size: 128
     verbose_evals: true
@@ -116,7 +66,7 @@ problem_configs:
       alg_name: "cadmm"
       rho_init: 0.5
       rho_scaling: 1.0003
-      outer_iterations: 2000
+      outer_iterations: 900
       primal_iterations: 2
       primal_optimizer: "adam"
       persistant_primal_opt: false
