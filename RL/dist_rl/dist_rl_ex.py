@@ -1,4 +1,5 @@
 import sys
+
 sys.path.insert(0, "../")
 
 import torch
@@ -53,30 +54,30 @@ def main():
         "primal_iterations": hyperparameters["n_updates_per_iteration"],
         "max_rl_timesteps": 10_000_000,
         "outer_iterations": 10_000_000,
-        "ID": 7
+        "ID": 7,
     }
     dsgt_confs = {
         "max_rl_timesteps": 10_000_000,
         "n_updates_per_iteration": 3,
         "alpha_actor": 1e-2,
         "alpha_critic": 1e-5,
-        "ID": 7
+        "ID": 7,
     }
     dsgd_confs = {
         "max_rl_timesteps": 10_000_000,
         "n_updates_per_iteration": 5,
         "alpha0": 0.001,
         "mu": 1e-3,
-        "ID": 7
+        "ID": 7,
     }
     device = torch.device("cpu")
 
     # print("running cadmm")
     # dopt = cadmmPPO.CADMMPPO(dppo, device, cadmm_confs)
-    print("running dsgt")
-    dopt = dsgtPPO.DSGTPPO(dppo, device, dsgt_confs)
-    # print("running dsgd")
-    # dopt = dsgdPPO.DSGDPPO(dppo, device, dsgd_confs)
+    # print("running dsgt")
+    # dopt = dsgtPPO.DSGTPPO(dppo, device, dsgt_confs)
+    print("running dsgd")
+    dopt = dsgdPPO.DSGDPPO(dppo, device, dsgd_confs)
     dopt.train()
 
 
