@@ -1,5 +1,5 @@
 experiment:
-  name: "dist_mnist_v3"
+  name: "dist_mnist_cycle"
   data_dir: "../data/"
   output_metadir: "../results/"
   use_cuda: true
@@ -9,8 +9,8 @@ experiment:
   graph:
     num_nodes: 10
     type: "cycle"
-    p: 0.6
-    gen_attempts: 10
+    p: 0.3
+    gen_attempts: 100
   model:
     num_filters: 3
     kernel_size: 5
@@ -85,5 +85,5 @@ problem_configs:
       alg_name: "dsgd"
       outer_iterations: 2000
       alpha0: 0.005
-      mu: 0.0
+      mu: 0.001
       profile: false

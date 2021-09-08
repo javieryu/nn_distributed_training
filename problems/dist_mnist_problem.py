@@ -155,12 +155,14 @@ class DistMNISTProblem:
                     # Normalize the stack
                     th_stack = torch.nn.functional.normalize(th_stack, dim=1)
                     # Compute row-wise distances
-                    distances = torch.cdist(th_stack, th_stack)
-                    davg = distances.sum(axis=1) / self.N
+                    distances_all = torch.cdist(th_stack, th_stack)
+                    th_mean = torch.mean(th_stack, dim=0).reshape(1, -1)
+                    distances_mean = torch.cdist(th_stack, th_mean)
                 # append metrics and generate print string
-                self.metrics[met_name].append(distances)
+                self.metrics[met_name].append((distances_all, distances_mean))
                 evalprint += "Consensus: {:.4f} - {:.4f} | ".format(
-                    torch.amin(davg).item(), torch.amax(davg).item()
+                    torch.amin(distances_mean).item(),
+                    torch.amax(distances_mean).item(),
                 )
             elif met_name == "validation_loss":
                 # Average node loss on the validation dataset
