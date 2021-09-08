@@ -24,7 +24,7 @@ cent_color="indigo"
 solo_color="cornflowerblue"
 
 # CADMM
-ax0.plot(times_cadmm, agree_cadmm['agree_0'], c=cadmm_color, label="CADMM")
+ax0.plot(times_cadmm, agree_cadmm['agree_0'], c=cadmm_color, label="DDL-ADMM")
 ax0.plot(times_cadmm, agree_cadmm['agree_1'], c=cadmm_color)
 ax0.plot(times_cadmm, agree_cadmm['agree_2'], c=cadmm_color)
 

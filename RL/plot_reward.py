@@ -54,7 +54,7 @@ ax0.plot(times_cent, np.mean(rewards_arr_cent, axis=0), c=cent_color, label="Cen
 # ax0.fill_between(times_cent, np.amax(rewards_arr_cent, axis=0), np.amin(rewards_arr_cent, axis=0), color=cent_color, alpha=0.5)
 
 # CADMM
-ax0.plot(times_cadmm, np.mean(rewards_arr_cadmm, axis=0), c=cadmm_color, label="CADMM")
+ax0.plot(times_cadmm, np.mean(rewards_arr_cadmm, axis=0), c=cadmm_color, label="DDL-ADMM")
 # ax0.fill_between(times_cadmm, np.amax(rewards_arr_cadmm, axis=0), np.amin(rewards_arr_cadmm, axis=0), color=cadmm_color, alpha=0.5)
 
 # DSGT
