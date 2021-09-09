@@ -31,7 +31,7 @@ def main():
         "clip": 0.2,
         "render": False,
         "render_every_i": 1,
-        "save_freq": 103, # 103 for 3 epochs, 104 for 4 epochs
+        "save_freq": 10, 
     }
     env.reset()
     obs_dim = env.observation_spaces["adversary_0"].shape[0]
@@ -53,7 +53,7 @@ def main():
         "primal_iterations": hyperparameters["n_updates_per_iteration"],
         "max_rl_timesteps": 15_000_000,
         "outer_iterations": 15_000_000,
-        "ID": ii
+        "ID": 103 # 103 for 3 epochs, 104 for 4 epochs
     }
     device = torch.device("cpu")
 
@@ -82,7 +82,7 @@ def main():
         "clip": 0.2,
         "render": False,
         "render_every_i": 1,
-        "save_freq": 104, # 103 for 3 epochs, 104 for 4 epochs
+        "save_freq": 10, 
     }
     env.reset()
     obs_dim = env.observation_spaces["adversary_0"].shape[0]
@@ -104,7 +104,7 @@ def main():
         "primal_iterations": hyperparameters["n_updates_per_iteration"],
         "max_rl_timesteps": 15_000_000,
         "outer_iterations": 15_000_000,
-        "ID": ii
+        "ID": 104 # 103 for 3 epochs, 104 for 4 epochs
     }
     device = torch.device("cpu")
 
