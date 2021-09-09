@@ -14,7 +14,7 @@ from pettingzoo.mpe import simple_tag_v2
 
 
 def main():
-    for ii in range(5):
+    for ii in [10, 11, 12, 13, 14]:
         steps = 200
         env = simple_tag_v2.env(
             num_good=1,
@@ -46,7 +46,7 @@ def main():
         )
         dsgt_confs = {
         "max_rl_timesteps": 10_000_000,
-        "n_updates_per_iteration": 3,
+        "n_updates_per_iteration": 5,
         "alpha_actor": 1e-2,
         "alpha_critic": 1e-5,
         "ID": ii

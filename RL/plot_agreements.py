@@ -14,6 +14,12 @@ agree_dsgt = np.load('dist_rl/trained/agreements_dsgt_7.npz')
 times_dsgd = np.load('dist_rl/trained/timesteps_dsgd_7.npy')
 agree_dsgd = np.load('dist_rl/trained/agreements_dsgd_7.npz')
 
+# Load Joe
+times_joe = np.load('dist_rl/trained/timesteps_cadmm_103.npy')
+agree_103 = np.load('dist_rl/trained/agreements_cadmm_103.npz')
+agree_104 = np.load('dist_rl/trained/agreements_cadmm_104.npz')
+
+
 # Construct Plot
 (fig, ax0) = plt.subplots(figsize=(10, 8), tight_layout=True)
 
@@ -37,6 +43,15 @@ ax0.plot(times_dsgt, agree_dsgt['agree_2'], c=dsgt_color)
 ax0.plot(times_dsgd, agree_dsgd['agree_0'], c=dsgd_color, label="DSGD")
 ax0.plot(times_dsgd, agree_dsgd['agree_1'], c=dsgd_color)
 ax0.plot(times_dsgd, agree_dsgd['agree_2'], c=dsgd_color)
+
+# Joe
+ax0.plot(times_joe, agree_103['agree_0'], c='blue', label="3 updates")
+ax0.plot(times_joe, agree_103['agree_1'], c='blue')
+ax0.plot(times_joe, agree_103['agree_2'], c='blue')
+
+ax0.plot(times_joe, agree_104['agree_0'], c='green', label="4 updates")
+ax0.plot(times_joe, agree_104['agree_1'], c='green')
+ax0.plot(times_joe, agree_104['agree_2'], c='green')
 
 ax0.legend()
 ax0.set_xlabel("Timestep")
