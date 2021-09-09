@@ -22,6 +22,11 @@ rewards3 = np.load('dist_rl/trained/avg_ep_rews_cadmm_3.npy')
 rewards4 = np.load('dist_rl/trained/avg_ep_rews_cadmm_4.npy')
 rewards_arr_cadmm = np.vstack((rewards0, rewards1, rewards2, rewards3, rewards4))
 
+# Load joe rho test
+times_joe = np.load('dist_rl/trained/timesteps_cadmm_103.npy')
+rewards_103 = np.load('dist_rl/trained/avg_ep_rews_cadmm_103.npy')
+rewards_104 = np.load('dist_rl/trained/avg_ep_rews_cadmm_104.npy')
+
 # Load DSGT
 times_dsgt = np.load('dist_rl/trained/timesteps_dsgt_1.npy')
 rewards0 = np.load('dist_rl/trained/avg_ep_rews_dsgt_0.npy')
@@ -65,6 +70,9 @@ ax0.plot(times_dsgt, np.mean(rewards_arr_dsgt, axis=0), c=dsgt_color, label="DSG
 ax0.plot(times_dsgd, np.mean(rewards_arr_dsgd, axis=0), c=dsgd_color, label="DSGD")
 # ax0.fill_between(times_dsgd, np.amax(rewards_arr_dsgd, axis=0), np.amin(rewards_arr_dsgd, axis=0), color=dsgd_color, alpha=0.5)
 
+# CADMM - Joe
+ax0.plot(times_joe, rewards_103, c='blue', label="Joe")
+ax0.plot(times_joe, rewards_104, c='green', label="Joe")
 
 ax0.legend()
 ax0.set_xlabel("Timestep")
