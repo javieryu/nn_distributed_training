@@ -70,7 +70,7 @@ def heuristic(env, obs):
 		action[3] = 0.0
 	return action
 
-def rollout_marl(actors, env, render, state_log=False):
+def rollout_marl(actors, env, render, state_log=False, seed=None):
 	"""
 		Returns a generator to roll out each episode given a trained policy and
 		environment to test on. 
@@ -85,6 +85,7 @@ def rollout_marl(actors, env, render, state_log=False):
 	"""
 	# Rollout until user kills process
 	while True:
+		env.seed(seed=seed)
 		obs = env.reset()
 		done = False
 
@@ -172,38 +173,57 @@ env = simple_tag_v2.env(
 env.reset()
 obs_dim = env.observation_spaces["adversary_0"].shape[0]
 act_dim = env.action_spaces["adversary_0"].shape[0]
+render = False
+seed = 1 # 1!, 5, 21, 38, 50
+
+
+
+# Rollout with the policy and environment, and log each episode's data
+# load policy networks
+actor0 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
+actor1 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
+actor2 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
+# Change specific models here:
+actor_models = torch.load('./trained/ppo_actors_tag_cadmm_40.pth')
+actor0.load_state_dict(actor_models['actor0'])
+actor1.load_state_dict(actor_models['actor0'])
+actor2.load_state_dict(actor_models['actor0'])
+actors = {0: actor0, 1: actor1, 2: actor2}
+positions0 = rollout_marl(actors, env, render, state_log=True, seed=seed)
+positions0['obstacles'] = np.array([[-1.2, -0.6], [0.1, -1.1], [-0.3, 0.4], [0.9, 0.75],
+					   [-0.9, 1.2], [-0.1, 1.3], [-1.2, 0.0], [1.3, 0.0]])
 
 
 # load policy networks
 actor0 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
 actor1 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
 actor2 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
-
-actor_models = torch.load('./trained/ppo_actors_tag_long.pth')
-actor0.load_state_dict(actor_models['actor0'])
-actor1.load_state_dict(actor_models['actor1'])
+# Change specific models here:
+actor_models = torch.load('./trained/ppo_actors_tag_cadmm_40.pth')
+actor0.load_state_dict(actor_models['actor2'])
+actor1.load_state_dict(actor_models['actor2'])
 actor2.load_state_dict(actor_models['actor2'])
-
 actors = {0: actor0, 1: actor1, 2: actor2}
-
-render = True
-
-# # Rollout with the policy and environment, and log each episode's data
-# for ep_num, (ep_len, ep_ret) in enumerate(rollout_marl(actors, env, render)):
-# 	_log_summary(ep_len=ep_len, ep_ret=ep_ret, ep_num=ep_num)
+positions1 = rollout_marl(actors, env, render, state_log=True, seed=seed)
 
 
+# load policy networks
+actor0 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
+actor1 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
+actor2 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
+# Change specific models here:
+actor_models = torch.load('./trained/ppo_actors_tag_cadmm_40.pth')
+actor0.load_state_dict(actor_models['actor2'])
+actor1.load_state_dict(actor_models['actor2'])
+actor2.load_state_dict(actor_models['actor2'])
+actors = {0: actor0, 1: actor1, 2: actor2}
+positions2 = rollout_marl(actors, env, render, state_log=True, seed=seed)
+# np.save('trained/positions.npy', positions)
 
-positions = rollout_marl(actors, env, render, state_log=True)
-positions['obstacles'] = np.array([[-1.2, -0.6], [0.1, -1.1], [-0.3, 0.4], [0.9, 0.75],
-					   [-0.9, 1.2], [-0.1, 1.3], [-1.2, 0.0], [1.3, 0.0]])
-np.save('trained/positions.npy', positions)
-
-
-import scipy.interpolate as interp
 
 
 # plot things
+import scipy.interpolate as interp
 import matplotlib.pyplot as plt
 def interpolate(x, y, res):
 	x, y = x, y  ##self.poly.xy[:].T
@@ -218,36 +238,86 @@ def interpolate(x, y, res):
 
 
 
+ ### For 1 Trajectory ###
+# plt.rcParams.update({'font.size': 16})
+# (fig, ax0) = plt.subplots(figsize=(10, 8), tight_layout=True)
+# t_steps = min(positions['agent_0'].shape[0], positions['adversary_0'].shape[0], positions['adversary_1'].shape[0], positions['adversary_2'].shape[0])
 
+# # add landmarks
+# for i in range(positions['obstacles'].shape[0]):
+# 	plt.gca().add_patch(plt.Circle((positions['obstacles'][i,:]), 0.2, fc=[0.25, 0.25, 0.25]))
+
+# mod = 4
+# # add smooth trajectories
+# xspline, yspline = interpolate(positions['agent_0'][0:t_steps-mod + 2,0], positions['agent_0'][0:t_steps-mod + 2,1], 120)
+# plt.plot(xspline, yspline, color=[0.35, 0.85, 0.35], alpha=0.5)
+# xspline, yspline = interpolate(positions['adversary_0'][0:t_steps-mod + 2,0], positions['adversary_0'][0:t_steps-mod + 2,1], 120)
+# plt.plot(xspline, yspline, color=[0.85, 0.35, 0.35], alpha=0.5)
+# xspline, yspline = interpolate(positions['adversary_1'][0:t_steps-mod + 2,0], positions['adversary_1'][0:t_steps-mod + 2,1], 120)
+# plt.plot(xspline, yspline, color=[0.85, 0.35, 0.35], alpha=0.5)
+# xspline, yspline = interpolate(positions['adversary_2'][0:t_steps-mod + 2,0], positions['adversary_2'][0:t_steps-mod + 2,1], 120)
+# plt.plot(xspline, yspline, color=[0.85, 0.35, 0.35], alpha=0.5)
+
+# opacities = np.linspace(0, 1, num=t_steps)
+# # add agent and adversaries
+# for i in range(t_steps):
+# 	if i % mod == 0:
+# 		plt.gca().add_patch(plt.Circle((positions['agent_0'][i,:]),      0.05, fc=[0.35, 0.85, 0.35], alpha=opacities[i]) )
+# 		plt.gca().add_patch(plt.Circle((positions['adversary_0'][i,:]), 0.075, fc=[0.85, 0.35, 0.35], alpha=opacities[i]) )
+# 		plt.gca().add_patch(plt.Circle((positions['adversary_1'][i,:]), 0.075, fc=[0.85, 0.35, 0.35], alpha=opacities[i]) )
+# 		plt.gca().add_patch(plt.Circle((positions['adversary_2'][i,:]), 0.075, fc=[0.85, 0.35, 0.35], alpha=opacities[i]) )
+
+
+# plt.axis('scaled')
+# plt.show()
+# fig.savefig("ghost_traj_actx.png")
+
+
+
+
+
+ ### For 3 Trajectory ###
 plt.rcParams.update({'font.size': 16})
 (fig, ax0) = plt.subplots(figsize=(10, 8), tight_layout=True)
-t_steps = min(positions['agent_0'].shape[0], positions['adversary_0'].shape[0], positions['adversary_1'].shape[0], positions['adversary_2'].shape[0])
+t_steps = min(positions0['agent_0'].shape[0], positions0['adversary_0'].shape[0], positions0['adversary_1'].shape[0], positions0['adversary_2'].shape[0])
 
 # add landmarks
-for i in range(positions['obstacles'].shape[0]):
-	plt.gca().add_patch(plt.Circle((positions['obstacles'][i,:]), 0.2, fc=[0.25, 0.25, 0.25]))
+for i in range(positions0['obstacles'].shape[0]):
+	plt.gca().add_patch(plt.Circle((positions0['obstacles'][i,:]), 0.2, fc=[0.25, 0.25, 0.25]))
 
 mod = 4
 # add smooth trajectories
-xspline, yspline = interpolate(positions['agent_0'][0:t_steps-mod + 2,0], positions['agent_0'][0:t_steps-mod + 2,1], 120)
+# actor0 policy
+xspline, yspline = interpolate(positions0['agent_0'][0:t_steps-mod + 2,0], positions0['agent_0'][0:t_steps-mod + 2,1], 120)
 plt.plot(xspline, yspline, color=[0.35, 0.85, 0.35], alpha=0.5)
-xspline, yspline = interpolate(positions['adversary_0'][0:t_steps-mod + 2,0], positions['adversary_0'][0:t_steps-mod + 2,1], 120)
+xspline, yspline = interpolate(positions0['adversary_0'][0:t_steps-mod + 2,0], positions0['adversary_0'][0:t_steps-mod + 2,1], 120)
 plt.plot(xspline, yspline, color=[0.85, 0.35, 0.35], alpha=0.5)
-xspline, yspline = interpolate(positions['adversary_1'][0:t_steps-mod + 2,0], positions['adversary_1'][0:t_steps-mod + 2,1], 120)
+xspline, yspline = interpolate(positions0['adversary_1'][0:t_steps-mod + 2,0], positions0['adversary_1'][0:t_steps-mod + 2,1], 120)
 plt.plot(xspline, yspline, color=[0.85, 0.35, 0.35], alpha=0.5)
-xspline, yspline = interpolate(positions['adversary_2'][0:t_steps-mod + 2,0], positions['adversary_2'][0:t_steps-mod + 2,1], 120)
+xspline, yspline = interpolate(positions0['adversary_2'][0:t_steps-mod + 2,0], positions0['adversary_2'][0:t_steps-mod + 2,1], 120)
 plt.plot(xspline, yspline, color=[0.85, 0.35, 0.35], alpha=0.5)
 
-opacities = np.linspace(0, 1, num=t_steps)
-# add agent and adversaries
-for i in range(t_steps):
-	if i % mod == 0:
-		plt.gca().add_patch(plt.Circle((positions['agent_0'][i,:]),      0.05, fc=[0.35, 0.85, 0.35], alpha=opacities[i]) )
-		plt.gca().add_patch(plt.Circle((positions['adversary_0'][i,:]), 0.075, fc=[0.85, 0.35, 0.35], alpha=opacities[i]) )
-		plt.gca().add_patch(plt.Circle((positions['adversary_1'][i,:]), 0.075, fc=[0.85, 0.35, 0.35], alpha=opacities[i]) )
-		plt.gca().add_patch(plt.Circle((positions['adversary_2'][i,:]), 0.075, fc=[0.85, 0.35, 0.35], alpha=opacities[i]) )
+# actor1 policy
+xspline, yspline = interpolate(positions1['agent_0'][0:t_steps-mod + 2,0], positions1['agent_0'][0:t_steps-mod + 2,1], 120)
+plt.plot(xspline, yspline, color='yellowgreen', alpha=0.5)
+xspline, yspline = interpolate(positions1['adversary_0'][0:t_steps-mod + 2,0], positions1['adversary_0'][0:t_steps-mod + 2,1], 120)
+plt.plot(xspline, yspline, color='indianred', alpha=0.5)
+xspline, yspline = interpolate(positions1['adversary_1'][0:t_steps-mod + 2,0], positions1['adversary_1'][0:t_steps-mod + 2,1], 120)
+plt.plot(xspline, yspline, color='indianred', alpha=0.5)
+xspline, yspline = interpolate(positions1['adversary_2'][0:t_steps-mod + 2,0], positions1['adversary_2'][0:t_steps-mod + 2,1], 120)
+plt.plot(xspline, yspline, color='indianred', alpha=0.5)
+
+# actor2 policy
+xspline, yspline = interpolate(positions2['agent_0'][0:t_steps-mod + 2,0], positions2['agent_0'][0:t_steps-mod + 2,1], 120)
+plt.plot(xspline, yspline, color='darkgreen', alpha=0.5)
+xspline, yspline = interpolate(positions2['adversary_0'][0:t_steps-mod + 2,0], positions2['adversary_0'][0:t_steps-mod + 2,1], 120)
+plt.plot(xspline, yspline, color='firebrick', alpha=0.5)
+xspline, yspline = interpolate(positions2['adversary_1'][0:t_steps-mod + 2,0], positions2['adversary_1'][0:t_steps-mod + 2,1], 120)
+plt.plot(xspline, yspline, color='firebrick', alpha=0.5)
+xspline, yspline = interpolate(positions2['adversary_2'][0:t_steps-mod + 2,0], positions2['adversary_2'][0:t_steps-mod + 2,1], 120)
+plt.plot(xspline, yspline, color='firebrick', alpha=0.5)
 
 
 plt.axis('scaled')
 plt.show()
-fig.savefig("ghost_traj.svg")
+fig.savefig("ghost_traj_multi.svg")
