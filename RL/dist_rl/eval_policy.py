@@ -320,4 +320,4 @@ plt.plot(xspline, yspline, color='firebrick', alpha=0.5)
 
 plt.axis('scaled')
 plt.show()
-fig.savefig("ghost_traj_multi.svg")
+# fig.savefig("ghost_traj_multi.svg")
