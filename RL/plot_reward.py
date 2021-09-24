@@ -23,12 +23,12 @@ rewards4 = np.load('dist_rl/trained/avg_ep_rews_cadmm_4.npy')
 rewards_arr_cadmm = np.vstack((rewards0, rewards1, rewards2, rewards3, rewards4))
 
 # Load DSGT
-times_dsgt = np.load('dist_rl/trained/timesteps_dsgt_1.npy')
-rewards0 = np.load('dist_rl/trained/avg_ep_rews_dsgt_0.npy')
-rewards1 = np.load('dist_rl/trained/avg_ep_rews_dsgt_1.npy')
-rewards2 = np.load('dist_rl/trained/avg_ep_rews_dsgt_2.npy')
-rewards3 = np.load('dist_rl/trained/avg_ep_rews_dsgt_3.npy')
-rewards4 = np.load('dist_rl/trained/avg_ep_rews_dsgt_4.npy')
+times_dsgt = np.load('dist_rl/trained/timesteps_dsgt_13.npy')
+rewards0 = np.load('dist_rl/trained/avg_ep_rews_dsgt_10.npy')
+rewards1 = np.load('dist_rl/trained/avg_ep_rews_dsgt_11.npy')
+rewards2 = np.load('dist_rl/trained/avg_ep_rews_dsgt_12.npy')
+rewards3 = np.load('dist_rl/trained/avg_ep_rews_dsgt_13.npy')
+rewards4 = np.load('dist_rl/trained/avg_ep_rews_dsgt_14.npy')
 rewards_arr_dsgt = np.vstack((rewards0, rewards1, rewards2, rewards3, rewards4))
 
 # Load DSGD

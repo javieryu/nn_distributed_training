@@ -14,7 +14,7 @@ from pettingzoo.mpe import simple_tag_v2
 
 
 def main():
-    for ii in [10, 11, 12, 13, 14]:
+    for ii in [13, 14]:
         steps = 200
         env = simple_tag_v2.env(
             num_good=1,
