@@ -14,7 +14,7 @@ from pettingzoo.mpe import simple_tag_v2
 
 
 def main():
-    for ii in range(5):
+    for ii in range(1):
         steps = 200
         env = simple_tag_v2.env(
             num_good=1,
@@ -54,7 +54,7 @@ def main():
             "primal_iterations": hyperparameters["n_updates_per_iteration"],
             "max_rl_timesteps": 10_000_000,
             "outer_iterations": 10_000_000,
-            "ID": ii
+            "ID": 50
         }
         device = torch.device("cpu")
 

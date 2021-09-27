@@ -216,10 +216,10 @@ class CADMMPPO:
                 # predator-prey
                 torch.save({'actor0': self.pr.actors[0].state_dict(), 
                             'actor1': self.pr.actors[1].state_dict(),
-                            'actor2': self.pr.actors[2].state_dict()},f'./trained/ppo_actors_tag_cadmm_{self.conf["ID"]}.pth')
+                            'actor2': self.pr.actors[2].state_dict()},f'./trained/ppo_actors_tag_cadmm_{self.conf["ID"]}_{k}.pth')
                 torch.save({'critic0': self.pr.critics[0].state_dict(), 
                             'critic1': self.pr.critics[1].state_dict(),
-                            'critic2': self.pr.critics[2].state_dict()},f'./trained/ppo_critics_tag_cadmm_{self.conf["ID"]}.pth')
+                            'critic2': self.pr.critics[2].state_dict()},f'./trained/ppo_critics_tag_cadmm_{self.conf["ID"]}_{k}.pth')
 
                 # save plotting data
                 np.save(f'./trained/avg_ep_rews_cadmm_{self.conf["ID"]}.npy', np.asarray(avg_ep_rews))

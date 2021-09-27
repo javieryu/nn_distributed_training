@@ -6,9 +6,10 @@ import model
 import gym
 import networkx as nx
 import numpy as np
-import argparse
-
 from pettingzoo.mpe import simple_tag_v2
+import scipy.interpolate as interp
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation 
 
 
 def _log_summary(ep_len, ep_ret, ep_num):
@@ -156,84 +157,110 @@ def rollout_marl(actors, env, render, state_log=False, seed=None):
 		# yield ep_len, ep_ret
 
 
+def rollout_render(env):
+	env.reset()
+	obs_dim = env.observation_spaces["adversary_0"].shape[0]
+	act_dim = env.action_spaces["adversary_0"].shape[0]
+	render = True
+	# seed = 1 # 1!, 5, 21, 38, 50
+	act_model = './trained/ppo_actors_tag_cadmm_40.pth'
+
+	# Rollout single learned policy
+	actor0 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
+	actor1 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
+	actor2 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
+	
+	actor_models = torch.load(act_model)
+	actor0.load_state_dict(actor_models['actor0'])
+	actor1.load_state_dict(actor_models['actor1'])
+	actor2.load_state_dict(actor_models['actor2'])
+	actors = {0: actor0, 1: actor1, 2: actor2}
+	positions = rollout_marl(actors, env, render, state_log=True)
+	return
 
 
+def interpolate(x, y, res):
+	x, y = x, y  ##self.poly.xy[:].T
+	i = np.arange(len(x))
+	interp_i = np.linspace(0, i.max(), res * i.max())
+	xi = interp.interp1d(i, x, kind="cubic")(interp_i)
+	yi = interp.interp1d(i, y, kind="cubic")(interp_i)
+	return xi, yi
 
-def get_args():
-	"""
-		Description:
-		Parses arguments at command line.
-		Parameters:
-			None
-		Return:
-			args - the arguments parsed
-	"""
-	parser = argparse.ArgumentParser()
 
-	parser.add_argument('--method', dest='method', type=str, default='cadmm')
-	args = parser.parse_args()
+def create_gif(env, optim, seed):
+	env.reset()
+	obs_dim = env.observation_spaces["adversary_0"].shape[0]
+	act_dim = env.action_spaces["adversary_0"].shape[0]
+	render = False
 
-	return args
+	# Rollout with the policy and environment, and log each episode's data
+	if optim == "cadmm":
+		actor_models = torch.load('./trained/ppo_actors_tag_cadmm_40.pth')
+	elif optim == "dsgt":
+		actor_models = torch.load('./trained/ppo_actors_tag_dsgt_13.pth')
+	elif optim == "dsgd":
+		actor_models = torch.load('./trained/ppo_actors_tag_dsgd_4.pth')
+
+	actor0 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
+	actor1 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
+	actor2 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
+	actor0.load_state_dict(actor_models['actor0'])
+	actor1.load_state_dict(actor_models['actor1'])
+	actor2.load_state_dict(actor_models['actor2'])
+	actors = {0: actor0, 1: actor1, 2: actor2}
+	positions = rollout_marl(actors, env, render, state_log=True, seed=seed)
+	positions['obstacles'] = np.array([[-1.2, -0.6], [0.1, -1.1], [-0.3, 0.4], [0.9, 0.75],
+						   [-0.9, 1.2], [-0.1, 1.3], [-1.2, 0.0], [1.3, 0.0]])
+
+	# Plotting #
+	plt.rcParams.update({'font.size': 16})
+	(fig, ax0) = plt.subplots(figsize=(8, 8), tight_layout=True)
+	plt.xlim([-2.5, 2.5])
+	plt.ylim([-2.5, 2.5])
+
+	t_steps = min(positions['agent_0'].shape[0], positions['adversary_0'].shape[0], positions['adversary_1'].shape[0], positions['adversary_2'].shape[0])
+
+	# add landmarks
+	for i in range(positions['obstacles'].shape[0]):
+		plt.gca().add_patch(plt.Circle((positions['obstacles'][i,:]), 0.2, fc=[0.25, 0.25, 0.25]))
+
+	def animate(i):
+		return [plt.gca().add_patch(plt.Circle((positions['agent_0'][i,:]),      0.05, fc=[0.35, 0.85, 0.35]) ),
+		plt.gca().add_patch(plt.Circle((positions['adversary_0'][i,:]), 0.075, fc=[0.85, 0.35, 0.35]) ),
+		plt.gca().add_patch(plt.Circle((positions['adversary_1'][i,:]), 0.075, fc=[0.85, 0.35, 0.35]) ),
+		plt.gca().add_patch(plt.Circle((positions['adversary_2'][i,:]), 0.075, fc=[0.85, 0.35, 0.35]) )]
+
+	anim = animation.FuncAnimation(fig, animate, frames=t_steps, interval=47, blit=True, repeat=False)
+	plt.show()
+	return anim
+	
+
 
 
 ### Scripting ###
+
 
 env = simple_tag_v2.env(
     num_good=1,
     num_adversaries=3,
     num_obstacles=8,
     max_cycles=200,
-    continuous_actions=True,
-)
+    continuous_actions=True)
 
-env.reset()
-obs_dim = env.observation_spaces["adversary_0"].shape[0]
-act_dim = env.action_spaces["adversary_0"].shape[0]
-render = True
-seed = 1 # 1!, 5, 21, 38, 50
+seed = 12
+create_gif(env, "cadmm", seed)
+create_gif(env, "dsgt", seed)
+create_gif(env, "dsgd", seed)
 
 
-args = get_args() # Parse arguments from command line
-if args.method == 'cadmm':
-	act_model = './trained/ppo_actors_tag_cadmm_40.pth'
-elif args.method == 'dsgt':
-	act_model = './trained/ppo_actors_tag_dsgt_14.pth'
-elif args.method == 'dsgd':
-	act_model = './trained/ppo_actors_tag_dsgd_7.pth'
+# rollout_render(env)
 
-
-# Rollout single learned policy
-actor0 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
-actor1 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
-actor2 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
-# Change specific models here:
-actor_models = torch.load(act_model)
-actor0.load_state_dict(actor_models['actor0'])
-actor1.load_state_dict(actor_models['actor1'])
-actor2.load_state_dict(actor_models['actor2'])
-actors = {0: actor0, 1: actor1, 2: actor2}
-positions0 = rollout_marl(actors, env, render, state_log=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# env.reset()
+# obs_dim = env.observation_spaces["adversary_0"].shape[0]
+# act_dim = env.action_spaces["adversary_0"].shape[0]
+# render = False
+# seed = 1 # 1!, 5, 21, 38, 50
 
 
 # # Rollout with the policy and environment, and log each episode's data
@@ -244,59 +271,16 @@ positions0 = rollout_marl(actors, env, render, state_log=True)
 # # Change specific models here:
 # actor_models = torch.load('./trained/ppo_actors_tag_cadmm_40.pth')
 # actor0.load_state_dict(actor_models['actor0'])
-# actor1.load_state_dict(actor_models['actor0'])
-# actor2.load_state_dict(actor_models['actor0'])
+# actor1.load_state_dict(actor_models['actor1'])
+# actor2.load_state_dict(actor_models['actor2'])
 # actors = {0: actor0, 1: actor1, 2: actor2}
-# positions0 = rollout_marl(actors, env, render, state_log=True, seed=seed)
-# positions0['obstacles'] = np.array([[-1.2, -0.6], [0.1, -1.1], [-0.3, 0.4], [0.9, 0.75],
+# positions = rollout_marl(actors, env, render, state_log=True, seed=seed)
+# positions['obstacles'] = np.array([[-1.2, -0.6], [0.1, -1.1], [-0.3, 0.4], [0.9, 0.75],
 # 					   [-0.9, 1.2], [-0.1, 1.3], [-1.2, 0.0], [1.3, 0.0]])
 
 
-# # load policy networks
-# actor0 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
-# actor1 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
-# actor2 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
-# # Change specific models here:
-# actor_models = torch.load('./trained/ppo_actors_tag_cadmm_40.pth')
-# actor0.load_state_dict(actor_models['actor2'])
-# actor1.load_state_dict(actor_models['actor2'])
-# actor2.load_state_dict(actor_models['actor2'])
-# actors = {0: actor0, 1: actor1, 2: actor2}
-# positions1 = rollout_marl(actors, env, render, state_log=True, seed=seed)
 
-
-# # load policy networks
-# actor0 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
-# actor1 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
-# actor2 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
-# # Change specific models here:
-# actor_models = torch.load('./trained/ppo_actors_tag_cadmm_40.pth')
-# actor0.load_state_dict(actor_models['actor2'])
-# actor1.load_state_dict(actor_models['actor2'])
-# actor2.load_state_dict(actor_models['actor2'])
-# actors = {0: actor0, 1: actor1, 2: actor2}
-# positions2 = rollout_marl(actors, env, render, state_log=True, seed=seed)
-# # np.save('trained/positions.npy', positions)
-
-
-
-# # plot things
-# import scipy.interpolate as interp
-# import matplotlib.pyplot as plt
-# def interpolate(x, y, res):
-# 	x, y = x, y  ##self.poly.xy[:].T
-# 	i = np.arange(len(x))
-
-# 	interp_i = np.linspace(0, i.max(), res * i.max())
-
-# 	xi = interp.interp1d(i, x, kind="cubic")(interp_i)
-# 	yi = interp.interp1d(i, y, kind="cubic")(interp_i)
-
-# 	return xi, yi
-
-
-
- ### For 1 Trajectory ###
+# ## For 1 Trajectory ###
 # plt.rcParams.update({'font.size': 16})
 # (fig, ax0) = plt.subplots(figsize=(10, 8), tight_layout=True)
 # t_steps = min(positions['agent_0'].shape[0], positions['adversary_0'].shape[0], positions['adversary_1'].shape[0], positions['adversary_2'].shape[0])
@@ -329,8 +313,6 @@ positions0 = rollout_marl(actors, env, render, state_log=True)
 # plt.axis('scaled')
 # plt.show()
 # fig.savefig("ghost_traj_actx.png")
-
-
 
 
 
