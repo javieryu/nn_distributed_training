@@ -188,20 +188,14 @@ def interpolate(x, y, res):
 	return xi, yi
 
 
-def create_gif(env, optim, seed):
+def create_gif(env, policy, seed):
 	env.reset()
 	obs_dim = env.observation_spaces["adversary_0"].shape[0]
 	act_dim = env.action_spaces["adversary_0"].shape[0]
 	render = False
 
 	# Rollout with the policy and environment, and log each episode's data
-	if optim == "cadmm":
-		actor_models = torch.load('./trained/ppo_actors_tag_cadmm_40.pth')
-	elif optim == "dsgt":
-		actor_models = torch.load('./trained/ppo_actors_tag_dsgt_13.pth')
-	elif optim == "dsgd":
-		actor_models = torch.load('./trained/ppo_actors_tag_dsgd_4.pth')
-
+	actor_models = torch.load(f'./trained/ppo_actors_tag_cadmm_50_{policy}.pth')
 	actor0 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
 	actor1 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
 	actor2 = model.FFReLUNet([obs_dim, 64, 64, 64, act_dim])
@@ -215,25 +209,44 @@ def create_gif(env, optim, seed):
 
 	# Plotting #
 	plt.rcParams.update({'font.size': 16})
-	(fig, ax0) = plt.subplots(figsize=(8, 8), tight_layout=True)
-	plt.xlim([-2.5, 2.5])
-	plt.ylim([-2.5, 2.5])
+	# (fig, ax0) = plt.subplots(figsize=(8, 8), tight_layout=True)
+	# plt.xlim([-2.5, 2.5])
+	# plt.ylim([-2.5, 2.5])
+
+	fig = plt.figure(figsize=(8, 8), tight_layout=True)
+	# plt.xlim([-2.5, 2.5])
+	# plt.ylim([-2.5, 2.5])
+	ax0 = plt.gca()
+	ax0.set_aspect(1)
+	ax0.set_xlim(-2.5, 2.5)
 
 	t_steps = min(positions['agent_0'].shape[0], positions['adversary_0'].shape[0], positions['adversary_1'].shape[0], positions['adversary_2'].shape[0])
 
-	# add landmarks
-	for i in range(positions['obstacles'].shape[0]):
-		plt.gca().add_patch(plt.Circle((positions['obstacles'][i,:]), 0.2, fc=[0.25, 0.25, 0.25]))
+	
 
 	def animate(i):
-		return [plt.gca().add_patch(plt.Circle((positions['agent_0'][i,:]),      0.05, fc=[0.35, 0.85, 0.35]) ),
-		plt.gca().add_patch(plt.Circle((positions['adversary_0'][i,:]), 0.075, fc=[0.85, 0.35, 0.35]) ),
-		plt.gca().add_patch(plt.Circle((positions['adversary_1'][i,:]), 0.075, fc=[0.85, 0.35, 0.35]) ),
-		plt.gca().add_patch(plt.Circle((positions['adversary_2'][i,:]), 0.075, fc=[0.85, 0.35, 0.35]) )]
+		ax0.clear()
+		ax0.set_aspect(1)
+		ax0.set_xlim(-2.5, 2.5)
+		ax0.set_ylim(-2.5, 2.5)
+		patches = [plt.gca().add_patch(plt.Circle((positions['agent_0'][i,:]), 0.05, fc=[0.35, 0.85, 0.35]) ),
+		ax0.add_patch(plt.Circle((positions['adversary_0'][i,:]), 0.075, fc=[0.85, 0.35, 0.35]) ),
+		ax0.add_patch(plt.Circle((positions['adversary_1'][i,:]), 0.075, fc=[0.85, 0.35, 0.35]) ),
+		ax0.add_patch(plt.Circle((positions['adversary_2'][i,:]), 0.075, fc=[0.85, 0.35, 0.35]) )]
+
+		# add landmarks
+		for i in range(positions['obstacles'].shape[0]):
+			patches.append(ax0.add_patch(plt.Circle((positions['obstacles'][i,:]), 0.2, fc=[0.25, 0.25, 0.25])))
+
+		return patches
 
 	anim = animation.FuncAnimation(fig, animate, frames=t_steps, interval=47, blit=True, repeat=False)
-	plt.show()
-	return anim
+	# plt.show()
+	# f = r"'./vids.mp4" 
+	# writervideo = animation.FFMpegWriter(fps=60) 
+	FFwriter = animation.FFMpegWriter(fps=30)
+	anim.save(f'vids/cadmm_50_{policy}.mp4', writer=FFwriter)
+	return
 	
 
 
@@ -249,9 +262,8 @@ env = simple_tag_v2.env(
     continuous_actions=True)
 
 seed = 12
-create_gif(env, "cadmm", seed)
-create_gif(env, "dsgt", seed)
-create_gif(env, "dsgd", seed)
+for policy in [0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600, 2800, 3000, 3200, 3400, 3570]:
+	create_gif(env, policy, seed)
 
 
 # rollout_render(env)
