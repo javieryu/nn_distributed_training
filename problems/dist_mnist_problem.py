@@ -114,15 +114,18 @@ class DistMNISTProblem:
         with torch.no_grad():
             loss = 0.0
             correct = 0
+            correct_list = []
             for x, y in self.val_loader:
                 x, y = x.to(self.device), y.to(self.device)
                 yh = self.models[i].forward(x)
                 loss += self.base_loss(yh, y).item()
                 pred = yh.argmax(dim=1, keepdim=True)
-                correct += pred.eq(y.view_as(pred)).sum().item()
+                correct_vec = pred.eq(y.view_as(pred))
+                correct += correct_vec.sum().item()
+                correct_list.append(correct_vec)
             avg_loss = loss / len(self.val_loader.dataset)
             acc = correct / len(self.val_loader.dataset)
-            return avg_loss, acc
+            return avg_loss, acc, torch.vstack(correct_list)
 
     def evaluate_metrics(self, at_end=False):
         """Evaluate models, and then append values to the metric lists."""
@@ -132,11 +135,13 @@ class DistMNISTProblem:
         if (
             "validation_loss" in self.metrics
             or "top1_accuracy" in self.metrics
+            or "valdiation_as_vector" in self.metrics
         ):
             avg_losses = torch.zeros(self.N)
             accs = torch.zeros(self.N)
+            valid_vecs = {}
             for i in range(self.N):
-                avg_losses[i], accs[i] = self.validate(i)
+                avg_losses[i], accs[i], valid_vecs[i] = self.validate(i)
 
         evalprint = "| "
         for met_name in self.conf["metrics"]:
@@ -191,6 +196,10 @@ class DistMNISTProblem:
                     int(torch.amin(self.epoch_tracker).item()),
                     int(torch.amax(self.epoch_tracker).item()),
                 )
+            elif met_name == "validation_as_vector":
+                # Returns the validations prediction correctness vector
+                # Nothing to print from here
+                self.metrics[met_name].append(valid_vecs)
             else:
                 raise NameError("Unknown metric.")
 

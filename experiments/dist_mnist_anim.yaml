@@ -1,0 +1,52 @@
+experiment:
+  name: "dist_mnist_anim"
+  data_dir: "../data/"
+  output_metadir: "../results/"
+  use_cuda: true
+  writeout: true
+  data_split_type: "hetero"
+  loss: "NLL"
+  graph:
+    num_nodes: 10
+    type: "cycle"
+    p: 0.3
+    gen_attempts: 100
+  model:
+    num_filters: 3
+    kernel_size: 5
+    linear_width: 64
+  individual_training:
+    train_solo: False
+    optimizer: "adam"
+    lr: 0.005
+    epochs: 6
+    train_batch_size: 100
+    val_batch_size: 100
+    verbose: true
+problem_configs:
+  problem1:
+    problem_name: "dinno"
+    train_batch_size: 64
+    val_batch_size: 128
+    verbose_evals: true
+    metrics:
+      - "forward_pass_count"
+      - "validation_loss"
+      - "consensus_error"
+      - "top1_accuracy"
+      - "current_epoch"
+      - "validation_as_vector"
+    metrics_config:
+      evaluate_frequency: 20
+    optimizer_config:
+      alg_name: "cadmm"
+      rho_init: 0.5
+      rho_scaling: 1.0003
+      outer_iterations: 3000
+      primal_iterations: 2
+      primal_optimizer: "adam"
+      persistant_primal_opt: false
+      primal_lr_start: 0.005
+      primal_lr_finish: 0.0005
+      lr_decay_type: "log"
+      profile: false

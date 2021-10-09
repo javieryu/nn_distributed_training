@@ -112,6 +112,9 @@ class CADMM:
             # Update the penalty parameter
             self.rho *= self.rho_scaling
 
+            # Update the communication graph
+            self.pr.update_graph()
+
             # Per node updates
             for i in range(self.pr.N):
                 neighs = list(self.pr.graph.neighbors(i))

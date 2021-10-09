@@ -43,7 +43,6 @@ class DistOnlineDensityProblem:
                 self.train_sets[i],
                 batch_size=self.conf["train_batch_size"],
                 shuffle=True,
-                num_workers=4,
             )
 
             self.train_iters[i] = iter(self.train_loaders[i])
@@ -114,8 +113,6 @@ class DistOnlineDensityProblem:
             # because this is symmetric across nodes we only have to do
             # this for node 0, and it will be consistent with all nodes.
             self.forward_cnt += self.conf["train_batch_size"]
-            if self.dynamic_graph:
-                self.update_graph()
 
         yh = self.models[i].forward(locs.to(self.device))
         if torch.isnan(yh).any():
@@ -149,6 +146,8 @@ class DistOnlineDensityProblem:
         self.graph, connectivity = graph_generation.euclidean_disk_graph(
             curr_poses, self.comm_radius
         )
+
+        # print("ne: ", len(self.graph.edges()), " k: ", k)
 
         if not connectivity:
             print("** WARNING: the communication graph is not connected. **")
@@ -239,8 +238,9 @@ class DistOnlineDensityProblem:
                 val_losses = torch.tensor(val_losses)
 
                 self.metrics[met_name].append(val_losses)
-                evalprint += "Val Loss: {:.4f} - {:.4f} | ".format(
+                evalprint += "Val Loss: {:.4f} - {:.4} - {:.4f} | ".format(
                     torch.amin(val_losses).item(),
+                    torch.mean(val_losses).item(),
                     torch.amax(val_losses).item(),
                 )
             elif met_name == "train_loss_moving_average":
@@ -281,6 +281,16 @@ class DistOnlineDensityProblem:
                     int(torch.amin(self.epoch_tracker).item()),
                     int(torch.amax(self.epoch_tracker).item()),
                 )
+            elif met_name == "current_position":
+                curr_poses = np.vstack(
+                    [
+                        self.train_sets[i].curr_pos.reshape(1, 2)
+                        for i in range(self.N)
+                    ]
+                )
+                self.metrics[met_name].append(curr_poses)
+            elif met_name == "current_graph":
+                self.metrics[met_name].append(copy.deepcopy(self.graph))
             else:
                 raise NameError("Unknown metric.")
 
