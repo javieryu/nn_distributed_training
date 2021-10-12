@@ -71,6 +71,10 @@ class DistDensityProblem:
 
         self.mesh_inputs = self.mesh_inputs.to(self.device)
 
+    def update_graph(self):
+        """Placeholder because the graph is not dynamic in this problem."""
+        pass
+
     def local_batch_loss(self, i):
         """Forward pass on a batch data for model at node i,
         and if it's node_id = 0 then increment a metric that

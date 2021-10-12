@@ -1,5 +1,4 @@
 import torch
-import torch_interpolations
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.interpolate as interp
@@ -241,11 +240,9 @@ if __name__ == "__main__":
     (ny, nx) = img.shape
     xs = torch.linspace(-1, 1, nx)
     ys = torch.linspace(-1, 1, ny)
-    gi = torch_interpolations.RegularGridInterpolator((xs, ys), img.T)
-    (X, Y) = torch.meshgrid(xs, ys)
-    X, Y = X.flatten().contiguous(), Y.flatten().contiguous()
-    X, Y = X[::8].contiguous(), Y[::8].contiguous()  # subsample
-    densities = gi((X, Y))
+    (X, Y) = np.meshgrid(xs, ys)
+    # X, Y = X.flatten().contiguous(), Y.flatten().contiguous()
+    # X, Y = X[::8].contiguous(), Y[::8].contiguous()  # subsample
     theta = np.linspace(0, 2 * np.pi, 4)
     r = 0.2
 
@@ -255,7 +252,7 @@ if __name__ == "__main__":
     poly = Polygon(np.column_stack([xs, ys]), animated=True, visible=False)
 
     fig, ax = plt.subplots()
-    ax.tricontourf(X, Y, densities)
+    ax.contourf(X, Y, img)
     ax.add_patch(poly)
     p = PolygonInteractor(ax, poly)
 

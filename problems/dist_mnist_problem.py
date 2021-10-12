@@ -97,6 +97,10 @@ class DistMNISTProblem:
 
         return self.base_loss(yh, y.to(self.device))
 
+    def update_graph(self):
+        """Placeholder because the graph is not dynamic in this problem."""
+        pass
+
     def save_metrics(self, output_dir):
         """Save current metrics lists to a PT file."""
         file_name = self.conf["problem_name"] + "_results.pt"
