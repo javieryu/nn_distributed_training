@@ -38,7 +38,7 @@ experiment:
     verbose: True
 problem_configs:
   problem1:
-    problem_name: "cadmm"
+    problem_name: "dinno"
     train_batch_size: 8000
     val_batch_size: 10000
     verbose_evals: True
@@ -51,7 +51,7 @@ problem_configs:
     metrics_config: 
       evaluate_frequency: 20
     optimizer_config:
-      alg_name: "cadmm"
+      alg_name: "dinno"
       rho_init: 0.5
       rho_scaling: 1.0
       outer_iterations: 1750

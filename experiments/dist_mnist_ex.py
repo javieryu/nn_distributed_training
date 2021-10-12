@@ -11,7 +11,7 @@ import networkx as nx
 
 from models.mnist_conv_nn import MNISTConvNet
 from problems.dist_mnist_problem import DistMNISTProblem
-from optimizers.cadmm import CADMM
+from optimizers.dinno import DiNNO
 from optimizers.dsgd import DSGD
 from optimizers.dsgt import DSGT
 from utils import graph_generation
@@ -192,8 +192,8 @@ def experiment(yaml_pth):
             prob_conf,
         )
 
-        if opt_conf["alg_name"] == "cadmm":
-            dopt = CADMM(prob, device, opt_conf)
+        if opt_conf["alg_name"] == "dinno":
+            dopt = DiNNO(prob, device, opt_conf)
         elif opt_conf["alg_name"] == "dsgd":
             dopt = DSGD(prob, device, opt_conf)
         elif opt_conf["alg_name"] == "dsgt":

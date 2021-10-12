@@ -54,7 +54,7 @@ problem_configs:
       tloss_decay: 0.2
       mesh_only_at_end: False
     optimizer_config:
-      alg_name: "cadmm"
+      alg_name: "dinno"
       rho_init: 0.3
       rho_scaling: 1.0004
       outer_iterations: 4000

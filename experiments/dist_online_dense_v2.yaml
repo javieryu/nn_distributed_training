@@ -1,5 +1,5 @@
 experiment:
-  name: "dist_online_dense_v1"
+  name: "dist_online_dense_v2"
   output_metadir: "../results/"
   writeout: True
   use_cuda: True
@@ -33,7 +33,7 @@ experiment:
     verbose: True
 problem_configs:
   problem1:
-    problem_name: "cadmm_log"
+    problem_name: "dinno_log"
     train_batch_size: 10000
     val_batch_size: 10000
     comm_radius: 1500.0
@@ -52,7 +52,7 @@ problem_configs:
       tloss_decay: 0.2
       mesh_only_at_end: True
     optimizer_config:
-      alg_name: "cadmm"
+      alg_name: "dinno"
       rho_init: 0.1
       rho_scaling: 1.0006
       outer_iterations: 4000

@@ -12,7 +12,7 @@ import numpy as np
 
 from models.fourier_nn import FourierNet
 from problems.dist_online_dense_problem import DistOnlineDensityProblem
-from optimizers.cadmm import CADMM
+from optimizers.dinno import DiNNO
 from optimizers.dsgt import DSGT
 from optimizers.dsgd import DSGD
 from utils import graph_generation
@@ -245,8 +245,8 @@ def experiment(yaml_pth):
             prob_conf,
         )
 
-        if opt_conf["alg_name"] == "cadmm":
-            dopt = CADMM(prob, device, opt_conf)
+        if opt_conf["alg_name"] == "dinno":
+            dopt = DiNNO(prob, device, opt_conf)
         elif opt_conf["alg_name"] == "dsgt":
             dopt = DSGT(prob, device, opt_conf)
         elif opt_conf["alg_name"] == "dsgd":

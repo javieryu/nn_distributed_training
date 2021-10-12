@@ -3,7 +3,7 @@ import math
 import numpy as np
 
 
-class CADMMPPO:
+class DiNNOPPO:
     def __init__(self, ddl_problem, device, conf):
         self.pr = ddl_problem
         self.conf = conf
@@ -182,13 +182,30 @@ class CADMMPPO:
 
                 self.primal_update(i, th_reg_actor, th_reg_critic, k)
 
-            avg_ep_rews.append(np.mean([np.sum(ep_rews) for ep_rews in self.pr.logger['batch_rews']]))
+            avg_ep_rews.append(
+                np.mean(
+                    [
+                        np.sum(ep_rews)
+                        for ep_rews in self.pr.logger["batch_rews"]
+                    ]
+                )
+            )
             timesteps.append(self.pr.logger["t_so_far"])
             # Compute and save agreements
             with torch.no_grad():
                 # The average distance from a single node to all of the other nodes in the problem
-                actor_params = [torch.nn.utils.parameters_to_vector(self.pr.actors[i].parameters()) for i in range(self.pr.N)]
-                critic_params = [torch.nn.utils.parameters_to_vector(self.pr.critics[i].parameters()) for i in range(self.pr.N)]
+                actor_params = [
+                    torch.nn.utils.parameters_to_vector(
+                        self.pr.actors[i].parameters()
+                    )
+                    for i in range(self.pr.N)
+                ]
+                critic_params = [
+                    torch.nn.utils.parameters_to_vector(
+                        self.pr.critics[i].parameters()
+                    )
+                    for i in range(self.pr.N)
+                ]
 
                 # Stack all of the parameters into rows
                 th_stack_a = torch.stack(actor_params)
@@ -197,7 +214,7 @@ class CADMMPPO:
 
                 # Normalize the stack
                 th_stack = torch.nn.functional.normalize(th_stack, dim=1)
-                
+
                 # Compute row-wise distances
                 th_mean = torch.mean(th_stack, dim=0).reshape(1, -1)
                 distances_mean = torch.cdist(th_stack, th_mean)
@@ -214,17 +231,38 @@ class CADMMPPO:
             if k % self.pr.save_freq == 0:
                 # marl
                 # predator-prey
-                torch.save({'actor0': self.pr.actors[0].state_dict(), 
-                            'actor1': self.pr.actors[1].state_dict(),
-                            'actor2': self.pr.actors[2].state_dict()},f'./trained/ppo_actors_tag_cadmm_{self.conf["ID"]}_{k}.pth')
-                torch.save({'critic0': self.pr.critics[0].state_dict(), 
-                            'critic1': self.pr.critics[1].state_dict(),
-                            'critic2': self.pr.critics[2].state_dict()},f'./trained/ppo_critics_tag_cadmm_{self.conf["ID"]}_{k}.pth')
+                torch.save(
+                    {
+                        "actor0": self.pr.actors[0].state_dict(),
+                        "actor1": self.pr.actors[1].state_dict(),
+                        "actor2": self.pr.actors[2].state_dict(),
+                    },
+                    f'./trained/ppo_actors_tag_dinno_{self.conf["ID"]}_{k}.pth',
+                )
+                torch.save(
+                    {
+                        "critic0": self.pr.critics[0].state_dict(),
+                        "critic1": self.pr.critics[1].state_dict(),
+                        "critic2": self.pr.critics[2].state_dict(),
+                    },
+                    f'./trained/ppo_critics_tag_dinno_{self.conf["ID"]}_{k}.pth',
+                )
 
                 # save plotting data
-                np.save(f'./trained/avg_ep_rews_cadmm_{self.conf["ID"]}.npy', np.asarray(avg_ep_rews))
-                np.save(f'./trained/timesteps_cadmm_{self.conf["ID"]}.npy', np.asarray(timesteps))
-                np.savez(f'./trained/agreements_cadmm_{self.conf["ID"]}', agree_0=agree_0, agree_1=agree_1, agree_2=agree_2)
+                np.save(
+                    f'./trained/avg_ep_rews_dinno_{self.conf["ID"]}.npy',
+                    np.asarray(avg_ep_rews),
+                )
+                np.save(
+                    f'./trained/timesteps_dinno_{self.conf["ID"]}.npy',
+                    np.asarray(timesteps),
+                )
+                np.savez(
+                    f'./trained/agreements_dinno_{self.conf["ID"]}',
+                    agree_0=agree_0,
+                    agree_1=agree_1,
+                    agree_2=agree_2,
+                )
 
             k += 1
 

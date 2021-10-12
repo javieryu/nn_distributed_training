@@ -4,7 +4,7 @@ sys.path.insert(0, "../")
 
 import torch
 import model
-import cadmmPPO
+import dinnoPPO
 from dist_ppo import DistPPOProblem
 import gym
 import sys
@@ -44,7 +44,7 @@ def main():
         dppo = DistPPOProblem(
             base_actor, base_critic, graph, env, **hyperparameters
         )
-        cadmm_confs = {
+        dinno_confs = {
             "rho_init": 1.0,
             "rho_scaling": 1.0,
             "primal_lr_start": hyperparameters["lr"],
@@ -54,12 +54,12 @@ def main():
             "primal_iterations": hyperparameters["n_updates_per_iteration"],
             "max_rl_timesteps": 10_000_000,
             "outer_iterations": 10_000_000,
-            "ID": 50
+            "ID": 50,
         }
         device = torch.device("cpu")
 
-        print("running cadmm")
-        dopt = cadmmPPO.CADMMPPO(dppo, device, cadmm_confs)
+        print("running dinno")
+        dopt = dinnoPPO.DiNNOPPO(dppo, device, dinno_confs)
         dopt.train()
 
 
