@@ -1,5 +1,5 @@
 experiment:
-  name: "dist_online_dense_v2"
+  name: "dist_online_dense_PAPER"
   output_metadir: "../results/"
   writeout: True
   use_cuda: True
@@ -8,7 +8,7 @@ experiment:
     data_dir: "../floorplans/32_data/"
     waypoint_subdir: "tight_paths"
     split_type: "trajectory"
-    num_scans_in_window: 400
+    num_scans_in_window: 800
     num_beams: 20
     beam_samps: 25
     beam_length: 0.2
@@ -24,7 +24,7 @@ experiment:
     shape: [2, 256, 64, 64, 64, 1]
     scale: 0.05
   individual_training:
-    train_solo: False
+    train_solo: True
     optimizer: "adam"
     lr: 0.001
     epochs: 1
@@ -34,7 +34,7 @@ experiment:
 problem_configs:
   problem1:
     problem_name: "dinno_log"
-    train_batch_size: 10000
+    train_batch_size: 12500
     val_batch_size: 10000
     comm_radius: 1500.0
     verbose_evals: True
@@ -53,8 +53,8 @@ problem_configs:
       mesh_only_at_end: True
     optimizer_config:
       alg_name: "dinno"
-      rho_init: 0.1
-      rho_scaling: 1.0006
+      rho_init: 0.3
+      rho_scaling: 1.0004
       outer_iterations: 4000
       primal_iterations: 5
       primal_optimizer: "adam"

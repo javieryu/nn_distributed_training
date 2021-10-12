@@ -1,5 +1,5 @@
 experiment:
-  name: "dist_mnist_cycle"
+  name: "dist_mnist_PAPER"
   data_dir: "../data/"
   output_metadir: "../results/"
   use_cuda: true
