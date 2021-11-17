@@ -1,0 +1,42 @@
+experiment:
+  name: "dist_mnist_scaling"
+  data_dir: "../data/"
+  output_metadir: "../results_scaling/"
+  use_cuda: true
+  writeout: false
+  loss: "NLL"
+  model:
+    num_filters: 3
+    kernel_size: 5
+    linear_width: 64
+  scaling:
+    const: "fiedler"
+    min_scale: 10
+    max_scale: 20
+    num_trials: 15
+    num_nodes: 20
+problem:
+  problem_name: "dinno"
+  train_batch_size: 64
+  val_batch_size: 128
+  verbose_evals: true
+  metrics:
+    - "forward_pass_count"
+    - "validation_loss"
+    - "consensus_error"
+    - "top1_accuracy"
+    - "current_epoch"
+  metrics_config:
+    evaluate_frequency: 100
+  optimizer_config:
+    alg_name: "dinno"
+    rho_init: 0.5
+    rho_scaling: 1.0003
+    outer_iterations: 1500
+    primal_iterations: 2
+    primal_optimizer: "adam"
+    persistant_primal_opt: false
+    primal_lr_start: 0.005
+    primal_lr_finish: 0.0005
+    lr_decay_type: "log"
+    profile: false
