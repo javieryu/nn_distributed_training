@@ -108,9 +108,8 @@ def experiment(yaml_pth):
         train_subsets = []
         order = torch.argsort(joint_train_set.targets)
         node_data_idxs = order.chunk(N)
-        print(len(node_data_idxs))
         for idxs in node_data_idxs:
-            print(len(idxs))
+            ds_size = len(idxs)
             train_subsets.append(
                 torch.utils.data.Subset(joint_train_set, idxs)
             )
@@ -140,6 +139,7 @@ def experiment(yaml_pth):
         print("-------------------------------------------------------")
         print("Running problem: ", trial, " / ", len(Ns))
         print("Num Nodes: ", N)
+        print("DS size: ", ds_size)
         if opt_conf["profile"]:
             with torch.profiler.profile(
                 schedule=torch.profiler.schedule(

@@ -1,5 +1,5 @@
 experiment:
-  name: "dist_mnist_scaling"
+  name: "scaling_dinno_const_fied"
   data_dir: "../data/"
   output_metadir: "../results_scaling/"
   use_cuda: true
@@ -12,7 +12,7 @@ experiment:
   scaling:
     const: "fiedler"
     min_scale: 10
-    max_scale: 20
+    max_scale: 25
     num_trials: 15
     num_nodes: 20
 problem:
