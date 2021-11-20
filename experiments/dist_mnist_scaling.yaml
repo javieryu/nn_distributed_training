@@ -3,7 +3,7 @@ experiment:
   data_dir: "../data/"
   output_metadir: "../results_scaling/"
   use_cuda: true
-  writeout: false
+  writeout: true
   loss: "NLL"
   model:
     num_filters: 3
