@@ -92,7 +92,8 @@ def experiment(yaml_pth):
     for (trial, N) in enumerate(Ns):
         # Generate the graph
         if scale_conf["const"] == "fiedler":
-            graph = nx.star_graph(N - 1)
+            # graph = nx.star_graph(N - 1)
+            graph = graph_generation.gen_delaunay(N)
         elif scale_conf["const"] == "num_nodes":
             graph = graph_generation.gen_with_fied(N, fieds[trial])
 

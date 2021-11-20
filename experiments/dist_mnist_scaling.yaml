@@ -3,7 +3,7 @@ experiment:
   data_dir: "../data/"
   output_metadir: "../results_scaling/"
   use_cuda: true
-  writeout: true
+  writeout: false
   loss: "NLL"
   model:
     num_filters: 3
@@ -11,7 +11,7 @@ experiment:
     linear_width: 64
   scaling:
     const: "fiedler"
-    min_scale: 10
+    min_scale: 5
     max_scale: 25
     num_trials: 15
     num_nodes: 20

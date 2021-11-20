@@ -2,6 +2,7 @@ import networkx as nx
 import numpy as np
 import scipy
 import torch
+import scipy.spatial as spatial
 
 
 def generate_from_conf(graph_conf):
@@ -82,3 +83,25 @@ def euclidean_disk_graph(poses, radius):
     graph = nx.from_numpy_matrix(adj_mat)
 
     return graph, nx.is_connected(graph)
+
+
+def gen_delaunay(N):
+    """Generates a graph from the delaunay triangulation
+    of N points sampled uniformly from the [0, 1] box.
+
+    Args:
+        N (int): Number of nodes
+
+    Returns:
+        [networkx.Graph]: Graph of Delaunay triangulation.
+    """
+    positions = np.random.rand(N, 2)
+    tri = spatial.Delaunay(positions)
+    edges = []
+    for simplex in tri.simplices:
+        edges.append((simplex[0], simplex[1]))
+        edges.append((simplex[1], simplex[2]))
+        edges.append((simplex[0], simplex[2]))
+
+    graph = nx.Graph(edges)
+    return graph
