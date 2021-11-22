@@ -3,6 +3,67 @@ import numpy as np
 import scipy
 import torch
 import scipy.spatial as spatial
+import random
+
+
+def fied_from_disk(N, positions, radius):
+    G = nx.random_geometric_graph(N, radius, pos=positions)
+    return nx.linalg.algebraic_connectivity(G, tol=1e-3, method="lanczos")
+
+
+def disk_with_fied(N, targ, num_restarts=50):
+    for _ in range(num_restarts):
+        pos = {i: (random.random(), random.random()) for i in range(N)}
+
+        # +/- tolerance to target
+        tol = 0.01
+
+        # initial bounds
+        lbr = 0.05
+        ubr = 0.8
+
+        lbf = fied_from_disk(N, pos, lbr)
+        ubf = fied_from_disk(N, pos, ubr)
+
+        if abs(lbf - targ) < tol:
+            return nx.random_geometric_graph(N, lbr, pos=pos)
+
+        if abs(ubf - targ) < tol:
+            return nx.random_geometric_graph(N, ubr, pos=pos)
+
+        if not ubf > lbf:
+            print("upper bound fied", ubf)
+            print("lower bound fied", lbf)
+            raise NameError("Not sure whats happening in graph gen")
+
+        if targ > ubf or targ < lbf:
+            print("upper bound fied", ubf)
+            print("lower bound fied", lbf)
+            raise NameError("Target outside range.")
+
+        flag = True
+        c = 0
+        while flag:
+            midr = (ubr + lbr) / 2
+
+            midf = fied_from_disk(N, pos, midr)
+
+            if abs(midf - targ) < tol:
+                return nx.random_geometric_graph(N, midr, pos=pos)
+
+            if midf > targ:
+                ubr = midr
+                ubf = midf
+            elif midf < targ:
+                lbr = midr
+                lbf = midf
+
+            if c > 100:
+                break
+            else:
+                c += 1
+
+    raise ("Never found a viable graph!")
 
 
 def generate_from_conf(graph_conf):

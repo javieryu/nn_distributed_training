@@ -11,10 +11,13 @@ experiment:
     linear_width: 64
   scaling:
     const: "fiedler"
-    min_scale: 98
-    max_scale: 100
-    num_trials: 15
+    min_N: 10
+    max_N: 100
+    target_fied: 1.0
+    max_fied: 5.0
+    min_fied: 0.5
     num_nodes: 20
+    num_trials: 10
 problem:
   problem_name: "dinno"
   train_batch_size: 64

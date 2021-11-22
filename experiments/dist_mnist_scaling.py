@@ -77,25 +77,38 @@ def experiment(yaml_pth):
 
     scale_conf = exp_conf["scaling"]
     if scale_conf["const"] == "fiedler":
-        Ns = list(range(scale_conf["min_scale"], scale_conf["max_scale"]))
-    elif scale_conf["const"] == "num_nodes":
-        Ns = [scale_conf["num_nodes"] for _ in range(scale_conf["num_trials"])]
-        fieds = torch.linspace(
-            scale_conf["min_scale"],
-            scale_conf["max_scale"],
+        # Ns = list(range(scale_conf["min_scale"], scale_conf["max_scale"]))
+        Ns = torch.linspace(
+            scale_conf["min_N"],
+            scale_conf["max_N"],
             scale_conf["num_trials"],
         )
+        Ns = Ns.int().tolist()
+
+        graphs = []
+        for N in Ns:
+            G = graph_generation.disk_with_fied(N, scale_conf["target_fied"])
+            graphs.append(G)
+
+    elif scale_conf["const"] == "num_nodes":
+        fieds = torch.linspace(
+            scale_conf["min_fied"],
+            scale_conf["max_fied"],
+            scale_conf["num_trials"],
+        )
+
+        graphs = []
+        for fied in fieds:
+            G = graph_generation.disk_with_fied(scale_conf["num_nodes"], fied)
+            graphs.append(G)
     else:
         raise NameError("Unknown const factor in scaling")
 
+    print("Graph generation successful!")
+
     prob_conf = conf_dict["problem"]
-    for (trial, N) in enumerate(Ns):
-        # Generate the graph
-        if scale_conf["const"] == "fiedler":
-            # graph = nx.star_graph(N - 1)
-            graph = graph_generation.gen_delaunay(N)
-        elif scale_conf["const"] == "num_nodes":
-            graph = graph_generation.gen_with_fied(N, fieds[trial])
+    for (trial, graph) in enumerate(graphs):
+        N = len(graph.nodes)
 
         file_name = str(trial)
         prob_conf["problem_name"] = file_name
