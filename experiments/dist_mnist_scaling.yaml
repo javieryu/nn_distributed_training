@@ -11,8 +11,8 @@ experiment:
     linear_width: 64
   scaling:
     const: "fiedler"
-    min_scale: 5
-    max_scale: 25
+    min_scale: 10
+    max_scale: 30
     num_trials: 15
     num_nodes: 20
 problem:
