@@ -151,7 +151,7 @@ def experiment(yaml_pth):
 
         print("-------------------------------------------------------")
         print("-------------------------------------------------------")
-        print("Running problem: ", trial, " / ", len(Ns))
+        print("Running problem: ", trial, " / ", len(graphs))
         print("Num Nodes: ", N)
         print("DS size: ", ds_size)
         if opt_conf["profile"]:
