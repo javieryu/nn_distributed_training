@@ -30,7 +30,7 @@ problem:
     - "top1_accuracy"
     - "current_epoch"
   metrics_config:
-    evaluate_frequency: 50 
+    evaluate_frequency: 30
   optimizer_config:
     alg_name: "dinno"
     rho_init: 0.5
